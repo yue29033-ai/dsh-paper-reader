@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>harness · annotations chunk</title>
+<link rel="stylesheet" href="/harness/harness.css">
+<style>
+  .harness-a-layout {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .harness-a-doc-col {
+    flex: 1;
+    min-width: 0;
+    overflow: auto;
+    padding: 24px;
+    background: #eceef1;
+  }
+  .harness-a-page {
+    position: relative;
+    max-width: 560px;
+    margin: 0 auto 24px;
+    padding: 34px 38px;
+    border-radius: 2px;
+    background: #fff;
+    box-shadow: 0 2px 14px rgba(20, 24, 40, 0.2);
+    color: #141414;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 13px;
+    line-height: 1.6;
+    user-select: text;
+  }
+  .harness-a-page h3 {
+    margin: 0 0 10px;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+  }
+  .harness-a-page p {
+    margin: 0 0 10px;
+  }
+  .harness-a-meta {
+    margin: 0 0 14px;
+    color: #666;
+    font: 11px/1.5 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  }
+  .harness-a-notes-col {
+    display: flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    width: 330px;
+    min-height: 0;
+    overflow: auto;
+    padding: 12px;
+    border-left: 1px solid var(--dsw-alias-border-l2);
+    background: var(--dsw-alias-bg-layer-1);
+  }
+  .harness-a-panel-wrap {
+    position: relative;
+    flex: 0 0 auto;
+    height: 340px;
+    overflow: hidden;
+    border: 1px solid var(--dsw-alias-border-l1);
+    border-radius: 10px;
+    background: var(--dsw-alias-bg-layer-2);
+  }
+  .harness-a-notes-col .harness-a-section-title {
+    margin: 0 0 8px;
+    color: var(--dsw-alias-label-secondary);
+    font: 600 11px/1.4 -apple-system, BlinkMacSystemFont, sans-serif;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+  }
+  .harness-a-prompt {
+    margin: 0;
+    padding: 6px 8px;
+    border: 1px solid var(--dsw-alias-border-l2);
+    border-radius: 6px;
+    background: var(--dsw-alias-bg-layer-2);
+    color: var(--dsw-alias-label-secondary);
+    font: 10px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .harness-a-prompt + .harness-a-prompt {
+    margin-top: 6px;
+  }
+  .harness-a-token {
+    display: inline-block;
+    margin: 0 4px 4px 0;
+    padding: 2px 6px;
+    border-radius: 5px;
+    background: var(--dsw-alias-interactive-bg-hover);
+    color: var(--dsw-alias-label-primary);
+    font: 10px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  .harness-a-hints {
+    color: var(--dsw-alias-label-tertiary);
+    font: 11px/1.5 -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="mount" class="harness-mount"></div>
+</div>
+<pre id="probe" class="harness-probe" data-testid="probe" hidden></pre>
+
+<script src="/harness/shim.js"></script>
+<script src="/harness/umd/react.production.min.js"></script>
+<script src="/harness/umd/react-dom.production.min.js"></script>
+<script src="/harness/page-utils.js"></script>
+<script type="module">
+  /*
+   * Scenario: lib/client.annotations.js alone.
+   *
+   * A small fake "paper page" with real selectable text; selecting text shows
+   * the real SelectionMenu, whose actions drive the real store, HighlightLayer,
+   * NoteComposer and NotesPanel. Everything the tests assert is mirrored into
+   * window.__dprProbe / window.__dprAnnotations.
+   *
+   * URLs:  annotations.html?lang=zh|en&paper=<paperId>
+   *
+   * Test affordances:
+   *   window.__dprAnnotations.store / buildAskPrompt / ANNOTATION_COLORS
+   *   window.__dprSetLang(lang)          — switch UI language live
+   *   window.__dprResetAnnotations()     — clear this paper's localStorage key
+   *   window.__dprCorruptStorage()       — write garbage to the storage key
+   *   window.__dprSelectInPage(start,end) — programmatic selection helper
+   *   window.__dprPromptLong             — buildAskPrompt on a 3000-char quote
+   */
+  const harness = window.__dprHarness;
+  const probe = window.__dprProbe;
+  const h = React.createElement;
+
+  const params = harness.params;
+  const PAPER_ID = params.get('paper') || 'harness-paper';
+  const PAPER_TITLE = 'Adaptive Sparse Attention (harness fixture)';
+  const STORAGE_KEY = 'dsh-paper-reader:annotations:v1:' + PAPER_ID;
+  const PAGE_NUMBER = 1;
+
+  Object.assign(probe, {
+    page: 'annotations',
+    chunk: 'client.annotations.js',
+    paperId: PAPER_ID,
+    lang: params.get('lang') === 'en' ? 'en' : 'zh',
+    exports: [],
+    annotations: { highlights: [], notes: [] },
+    askedText: null,
+    askCalls: 0,
+    jumpedPage: null,
+    notesClosed: false,
+    menuVisible: false,
+    selection: null,
+    colors: null,
+  });
+
+  harness.h = h;
+
+  const Boundary = harness.ErrorBoundary(React);
+
+  /** Live UI language with external-store semantics (like a real locale service). */
+  const langSubscribers = new Set();
+  let activeLang = probe.lang;
+  function getLang() {
+    return activeLang;
+  }
+  function setLang(next) {
+    activeLang = next === 'en' ? 'en' : 'zh';
+    probe.lang = activeLang;
+    langSubscribers.forEach((notify) => notify());
+  }
+  function subscribeLang(notify) {
+    langSubscribers.add(notify);
+    return () => {
+      langSubscribers.delete(notify);
+    };
+  }
+  function useLang() {
+    return React.useSyncExternalStore(subscribeLang, getLang, getLang);
+  }
+  window.__dprSetLang = setLang;
+
+  /** Read the current DOM selection, normalized against the fake paper page. */
+  function readSelection() {
+    const selection = window.getSelection();
+    if (selection === null || selection === undefined || selection.isCollapsed || selection.rangeCount === 0) return null;
+    const text = String(selection.toString()).replace(/\s+/g, ' ').trim();
+    if (text === '') return null;
+    const pageEl = document.getElementById('harness-a-page');
+    if (pageEl === null) return null;
+    const pageRect = pageEl.getBoundingClientRect();
+    const range = selection.getRangeAt(0);
+    if (!pageEl.contains(range.commonAncestorContainer)) return null;
+    const rects = [];
+    let anchor = null;
+    const clientRects = Array.from(range.getClientRects());
+    for (const rect of clientRects) {
+      if (rect.width <= 0 || rect.height <= 0) continue;
+      const left = Math.max(rect.left, pageRect.left);
+      const top = Math.max(rect.top, pageRect.top);
+      const right = Math.min(rect.right, pageRect.right);
+      const bottom = Math.min(rect.bottom, pageRect.bottom);
+      if (right <= left || bottom <= top) continue;
+      rects.push({
+        page: PAGE_NUMBER,
+        x: (left - pageRect.left) / pageRect.width,
+        y: (top - pageRect.top) / pageRect.height,
+        w: (right - left) / pageRect.width,
+        h: (bottom - top) / pageRect.height,
+      });
+      if (anchor === null || rect.bottom >= anchor.bottom) {
+        anchor = { left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom };
+      }
+    }
+    if (rects.length === 0 || anchor === null) return null;
+    return { text: text, page: PAGE_NUMBER, rects: rects, anchor: anchor };
+  }
+
+  /** Programmatic selection over the first paragraph's text nodes (test helper). */
+  window.__dprSelectInPage = function selectInPage(startOffset, endOffset) {
+    const pageEl = document.getElementById('harness-a-page');
+    if (pageEl === null) return false;
+    const paragraph = pageEl.querySelector('p[data-selectable="1"]');
+    if (paragraph === null) return false;
+    const walker = document.createTreeWalker(paragraph, NodeFilter.SHOW_TEXT);
+    const nodes = [];
+    let length = 0;
+    while (walker.nextNode() !== null) {
+      nodes.push({ node: walker.currentNode, start: length, end: length + walker.currentNode.textContent.length });
+      length += walker.currentNode.textContent.length;
+    }
+    const start = Math.max(0, Math.min(startOffset ?? 0, length - 1));
+    const end = Math.max(start + 1, Math.min(endOffset ?? Math.min(length, start + 64), length));
+    const startNode = nodes.find((entry) => start >= entry.start && start <= entry.end) ?? nodes[0];
+    const endNode = nodes.find((entry) => end >= entry.start && end <= entry.end) ?? nodes[nodes.length - 1];
+    const range = document.createRange();
+    range.setStart(startNode.node, start - startNode.start);
+    range.setEnd(endNode.node, end - endNode.start);
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+    pageEl.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, cancelable: true }));
+    pageEl.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
+    return true;
+  };
+
+  /** Boot: load the chunk, build the store, mount the harness. */
+  async function boot() {
+    let annotations;
+    try {
+      annotations = await window.__dprRequireChunk('./client.annotations.js');
+    } catch (error) {
+      harness.missingChunk('client.annotations.js', error);
+      return;
+    }
+    const exports = annotations !== null && annotations !== undefined ? Object.keys(annotations) : [];
+    probe.exports = exports;
+    const required = [
+      'createAnnotationStore',
+      'HighlightLayer',
+      'SelectionMenu',
+      'NoteComposer',
+      'NotesPanel',
+      'buildAskPrompt',
+      'ANNOTATION_COLORS',
+    ];
+    const missing = required.filter((name) => typeof annotations[name] !== 'function' && !(name === 'ANNOTATION_COLORS' && annotations[name] !== undefined));
+    if (missing.length > 0) {
+      harness.fatal('client.annotations.js is missing exports: ' + missing.join(', '), 'got: ' + JSON.stringify(exports));
+      return;
+    }
+
+    const store = annotations.createAnnotationStore(PAPER_ID);
+    const buildAskPrompt = annotations.buildAskPrompt;
+    const ANNOTATION_COLORS = annotations.ANNOTATION_COLORS;
+    probe.colors = ANNOTATION_COLORS;
+    window.__dprAnnotations = {
+      store: store,
+      buildAskPrompt: buildAskPrompt,
+      ANNOTATION_COLORS: ANNOTATION_COLORS,
+      storageKey: STORAGE_KEY,
+    };
+    window.__dprResetAnnotations = function resetAnnotations() {
+      window.localStorage.removeItem(STORAGE_KEY);
+    };
+    window.__dprCorruptStorage = function corruptStorage() {
+      window.localStorage.setItem(STORAGE_KEY, '{"highlights": "not an array", ');
+    };
+    window.__dprPromptLong = buildAskPrompt({
+      lang: getLang(),
+      title: PAPER_TITLE,
+      page: PAGE_NUMBER,
+      text: 'x'.repeat(3000),
+    });
+
+    function publish() {
+      const snapshot = store.getSnapshot();
+      probe.annotations = snapshot;
+      probe.menuVisible = window.document.querySelector('[role="menu"]') !== null;
+      harness.debug('annotations', {
+        highlights: snapshot.highlights.length,
+        notes: snapshot.notes.length,
+        lang: getLang(),
+        menu: probe.menuVisible,
+      });
+    }
+    store.subscribe(publish);
+
+    /** The scenario UI. */
+    function AnnotationsHarness() {
+      const lang = useLang();
+      const snapshot = React.useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
+      const [selection, setSelection] = React.useState(null);
+      const [composer, setComposer] = React.useState(null);
+      const [menuStyle, setMenuStyle] = React.useState(null);
+      const pageRef = React.useRef(null);
+
+      /** Compute the menu position from the selection anchor (page-relative). */
+      function positionMenu(sel) {
+        const pageEl = pageRef.current;
+        if (pageEl === null || sel === null) return { position: 'absolute', left: 12, top: 12 };
+        const pageRect = pageEl.getBoundingClientRect();
+        const left = Math.min(Math.max(8, sel.anchor.right - pageRect.left - 60), Math.max(8, pageRect.width - 250));
+        const top = Math.min(Math.max(8, sel.anchor.bottom - pageRect.top + 8), Math.max(8, pageRect.height - 60));
+        return { position: 'absolute', left: Math.round(left), top: Math.round(top), zIndex: 50 };
+      }
+
+      /** Re-read the DOM selection (pointerup/mouseup path the real app has). */
+      const refreshSelection = React.useCallback(function refreshSelection() {
+        const sel = readSelection();
+        probe.selection = sel;
+        setSelection(sel);
+        setMenuStyle(sel === null ? null : positionMenu(sel));
+      }, []);
+
+      React.useEffect(function wireSelectionEvents() {
+        function onMouseUp(event) {
+          const pageEl = pageRef.current;
+          if (pageEl === null) return;
+          const target = event.target;
+          const inPage = target instanceof Node && pageEl.contains(target);
+          const inMenu = target instanceof Element && target.closest('[role="menu"]') !== null;
+          if (inMenu) return;
+          if (inPage) {
+            // Let the browser finish the selection before reading it.
+            window.setTimeout(refreshSelection, 0);
+          } else if (!inPage && !(target instanceof Element && target.closest('[data-testid="note-composer"]') !== null)) {
+            window.setTimeout(refreshSelection, 0);
+          }
+        }
+        function onKeyDown(event) {
+          if (event.key === 'Escape') {
+            window.setTimeout(function () {
+              setSelection(null);
+              probe.selection = null;
+              if (composer !== null) setComposer(null);
+            }, 0);
+          }
+        }
+        document.addEventListener('mouseup', onMouseUp);
+        document.addEventListener('keydown', onKeyDown);
+        return function cleanup() {
+          document.removeEventListener('mouseup', onMouseUp);
+          document.removeEventListener('keydown', onKeyDown);
+        };
+      }, [refreshSelection, composer]);
+
+      React.useEffect(publish, []);
+
+      function closeMenu() {
+        setSelection(null);
+        setMenuStyle(null);
+        probe.selection = null;
+        probe.menuVisible = false;
+        window.getSelection()?.removeAllRanges();
+      }
+
+      /** Record that the menu click did not clear the DOM selection before the action. */
+      function recordSelectionAtAction() {
+        try {
+          probe.selectionAtAction = String(window.getSelection() ?? '');
+        } catch {
+          probe.selectionAtAction = '';
+        }
+      }
+
+      function onHighlight() {
+        if (selection === null) return;
+        recordSelectionAtAction();
+        store.addHighlight({
+          page: selection.page,
+          rects: selection.rects.map((rect) => ({ x: rect.x, y: rect.y, w: rect.w, h: rect.h })),
+          text: selection.text,
+          color: 'yellow',
+        });
+        closeMenu();
+        publish();
+      }
+
+      function onNote() {
+        if (selection === null) return;
+        recordSelectionAtAction();
+        setComposer({ quote: selection.text, page: selection.page });
+        setSelection(null);
+        setMenuStyle(null);
+        probe.selection = null;
+      }
+
+      function onAsk() {
+        if (selection === null) return;
+        recordSelectionAtAction();
+        const text = buildAskPrompt({ lang: lang, title: PAPER_TITLE, page: selection.page, text: selection.text });
+        window.__askedText = text;
+        probe.askedText = text;
+        probe.askCalls += 1;
+        closeMenu();
+        publish();
+      }
+
+      const pageHighlights = snapshot.highlights.filter((highlight) => highlight.page === PAGE_NUMBER);
+
+      return h(
+        'div',
+        { className: 'harness-a-layout' },
+        h(
+          'div',
+          { className: 'harness-a-doc-col' },
+          h(
+            'div',
+            { className: 'harness-a-page', id: 'harness-a-page', ref: pageRef },
+            h('h3', null, 'Adaptive Sparse Attention for Efficient Long-Context Language Modeling'),
+            h('p', { className: 'harness-a-meta' }, 'Mira Okonkwo · Daniel R. Whitfield · Mei-Ling Chen · Jonas H. Berg'),
+            h(
+              'p',
+              { 'data-selectable': '1' },
+              'Long-context language models spend most of their attention budget on a small, input-dependent subset of token pairs. ',
+              'We introduce Adaptive Sparse Attention (ASA), a drop-in attention layer that learns a per-head routing mask from a cheap ',
+              'low-rank sketch of the query-key product. ASA reduces the quadratic cost of self-attention to O(n·k) with k ≈ log n, ',
+              'while retaining the expressivity of dense attention on the pairs the model actually uses.',
+            ),
+            h(
+              'p',
+              { 'data-selectable': '1' },
+              'Our starting observation is that the distribution of attention mass is extremely skewed: the top 5% of query-key pairs ',
+              'receive more than 92% of the total attention mass on average, and the identity of those pairs changes across layers.',
+            ),
+            pageHighlights.length === 0
+              ? null
+              : h('div', { 'data-testid': 'highlight-layer-wrap' }, h(annotations.HighlightLayer, { page: PAGE_NUMBER, highlights: pageHighlights })),
+            selection === null || menuStyle === null
+              ? null
+              : h(annotations.SelectionMenu, {
+                  lang: lang,
+                  style: menuStyle,
+                  onHighlight: onHighlight,
+                  onNote: onNote,
+                  onAsk: onAsk,
+                  onClose: closeMenu,
+                }),
+            composer === null
+              ? null
+              : h(
+                  'div',
+                  { 'data-testid': 'note-composer', style: { position: 'absolute', left: 24, top: 24, right: 24, zIndex: 60 } },
+                  h(annotations.NoteComposer, {
+                    lang: lang,
+                    quote: composer.quote,
+                    page: composer.page,
+                    onSave: function onSave(text) {
+                      store.addNote({ page: composer.page, quote: composer.quote, text: text });
+                      probe.lastNote = { page: composer.page, quote: composer.quote, text: text };
+                      setComposer(null);
+                      publish();
+                    },
+                    onCancel: function onCancel() {
+                      probe.composerCancelled = (probe.composerCancelled || 0) + 1;
+                      setComposer(null);
+                    },
+                  }),
+                ),
+          ),
+        ),
+        h(
+          'div',
+          { className: 'harness-a-notes-col' },
+          h('p', { className: 'harness-a-section-title' }, 'NotesPanel'),
+          h(
+            'div',
+            { className: 'harness-a-panel-wrap', 'data-testid': 'notes-panel-wrap' },
+            h(annotations.NotesPanel, {
+              lang: lang,
+              store: store,
+              onJump: function onJump(page) {
+                probe.jumpedPage = page;
+              },
+              onClose: function onClosePanel() {
+                probe.notesClosed = true;
+              },
+            }),
+          ),
+          h('p', { className: 'harness-a-section-title', style: { marginTop: '16px' } }, 'buildAskPrompt · zh'),
+          h('pre', { className: 'harness-a-prompt', 'data-testid': 'prompt-zh' }, buildAskPrompt({ lang: 'zh', title: PAPER_TITLE, page: 3, text: 'The selected quote for the prompt preview.' })),
+          h('p', { className: 'harness-a-section-title', style: { marginTop: '16px' } }, 'buildAskPrompt · en'),
+          h('pre', { className: 'harness-a-prompt', 'data-testid': 'prompt-en' }, buildAskPrompt({ lang: 'en', title: PAPER_TITLE, page: 3, text: 'The selected quote for the prompt preview.' })),
+          h('p', { className: 'harness-a-section-title', style: { marginTop: '16px' } }, 'ANNOTATION_COLORS'),
+          h(
+            'div',
+            { 'data-testid': 'annotation-colors' },
+            (ANNOTATION_COLORS || []).map(function colorChip(color, index) {
+              const value = typeof color === 'string' ? color : (color && (color.id || color.name || color.key)) || 'color-' + index;
+              return h('span', { key: index, className: 'harness-a-token' }, String(value));
+            }),
+          ),
+          h(
+            'p',
+            { className: 'harness-a-hints', 'data-testid': 'counts' },
+            'highlights: ' + snapshot.highlights.length + ' · notes: ' + snapshot.notes.length + ' · lang: ' + lang,
+          ),
+        ),
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('mount'));
+    root.render(h(Boundary, null, h(AnnotationsHarness, null)));
+    harness.setState('running');
+    harness.status('annotations mounted', 'info');
+    publish();
+  }
+
+  boot().catch(function (error) {
+    if (document.body.dataset.harnessState !== 'missing-chunk' && document.body.dataset.harnessState !== 'fatal') {
+      harness.fatal('annotations scenario crashed', error);
+    }
+  });
+</script>
+</body>
+</html>

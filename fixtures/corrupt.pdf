@@ -1,0 +1,6 @@
+%PDF-1.7
+%‚„œ”
+this fixture intentionally does not contain a valid PDF body.
+It has the header so upload validation accepts it, but PDF.js cannot
+parse it, which exercises the viewer malformed-document error state.
+endstream

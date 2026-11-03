@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>harness · viewer chunk</title>
+<link rel="stylesheet" href="/harness/harness.css">
+<style>
+  .harness-viewer-wrap {
+    position: relative;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .harness-overlay-marker {
+    position: absolute;
+    right: 8px;
+    top: 8px;
+    padding: 2px 6px;
+    border-radius: 6px;
+    background: rgba(77, 107, 254, 0.9);
+    color: #fff;
+    font: 600 10px/1.4 -apple-system, BlinkMacSystemFont, sans-serif;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="mount" class="harness-mount"></div>
+</div>
+<pre id="probe" class="harness-probe" data-testid="probe" hidden></pre>
+
+<script src="/harness/shim.js"></script>
+<script src="/harness/umd/react.production.min.js"></script>
+<script src="/harness/umd/react-dom.production.min.js"></script>
+<script src="/harness/page-utils.js"></script>
+<script type="module">
+  /*
+   * Scenario: lib/client.viewer.js alone.
+   *
+   * Mounts `PdfViewer` with a fixture PDF and exercises every documented prop:
+   * bytes, vendorBase, lang, zoom, renderPageOverlay, onDocumentReady,
+   * onPageChange, onSelection, apiRef, className.
+   *
+   * Test affordances (read by tests/harness.spec.mjs):
+   *   window.__dprProbe        — { state, ready, numPages, currentPage, selection, zoom, … }
+   *   window.__dprViewerApi    — the apiRef object the viewer received
+   *   window.__dprBytesLength  — fixture byte length handed to the viewer
+   *
+   * URLs:  viewer.html?fixture=/fixtures/paper-zh.pdf&lang=en
+   */
+  const harness = window.__dprHarness;
+  const probe = window.__dprProbe;
+  const h = React.createElement;
+
+  const params = harness.params;
+  const fixture = (function () {
+    const requested = params.get('fixture') || '/fixtures/paper-en.pdf';
+    return requested.startsWith('/fixtures/') ? requested : '/fixtures/paper-en.pdf';
+  })();
+  const lang = params.get('lang') === 'en' ? 'en' : 'zh';
+  const zoomStart = Number(params.get('zoom') || '1') || 1;
+
+  Object.assign(probe, {
+    page: 'viewer',
+    chunk: 'client.viewer.js',
+    fixture: fixture,
+    lang: lang,
+    ready: false,
+    numPages: null,
+    currentPage: null,
+    selection: null,
+    zoom: zoomStart,
+    bytesLength: 0,
+  });
+
+  harness.h = h;
+
+  const Boundary = harness.ErrorBoundary(React);
+
+  /** Render a compact structured probe into the debug panel. */
+  function publish(label) {
+    harness.debug(label, {
+      ready: probe.ready,
+      numPages: probe.numPages,
+      currentPage: probe.currentPage,
+      zoom: probe.zoom,
+      selection: probe.selection,
+      errors: probe.errors.length,
+    });
+  }
+
+  /** Toolbar + viewer. */
+  function ViewerHarness(props) {
+    const PdfViewer = props.PdfViewer;
+    const bytes = props.bytes;
+    const apiRef = props.apiRef;
+    const [zoom, setZoom] = React.useState(zoomStart);
+    const [info, setInfo] = React.useState({ ready: false, numPages: 0, page: 1 });
+    const [selection, setSelection] = React.useState(null);
+    const [statusText, setStatusText] = React.useState('loading PDF…');
+
+    const onDocumentReady = React.useCallback(function onDocumentReady(next) {
+      probe.ready = true;
+      probe.numPages = next.numPages;
+      setInfo((previous) => ({ ...previous, ready: true, numPages: next.numPages }));
+      setStatusText('PDF ready · ' + next.numPages + ' page(s)');
+      harness.setState('running');
+      publish('document-ready');
+    }, []);
+
+    const onPageChange = React.useCallback(function onPageChange(page) {
+      probe.currentPage = page;
+      setInfo((previous) => ({ ...previous, page: page }));
+      if (probe.ready) setStatusText('PDF ready · page ' + page + '/' + probe.numPages);
+      publish('page-change');
+    }, []);
+
+    const onSelection = React.useCallback(function onSelection(next) {
+      probe.selection = next;
+      setSelection(next);
+      if (next === null) {
+        setStatusText('selection cleared');
+      } else {
+        setStatusText('selection · p' + next.page + ' · ' + next.text.slice(0, 40));
+      }
+      publish('selection');
+    }, []);
+
+    React.useEffect(function reportZoom() {
+      probe.zoom = zoom;
+      publish('zoom');
+    }, [zoom]);
+
+    /** Re-render the viewer at a new zoom (contract: 1 = fit width, app clamps 0.5–3). */
+    function changeZoom(delta) {
+      setZoom(function (previous) {
+        return Math.min(3, Math.max(0.5, Math.round((previous + delta) * 100) / 100));
+      });
+    }
+
+    function goToPage(delta) {
+      const api = apiRef.current;
+      if (api === null || api === undefined) return;
+      const target = Math.min(info.numPages || 1, Math.max(1, info.page + delta));
+      api.scrollToPage(target);
+    }
+
+    function clearSelection() {
+      const api = apiRef.current;
+      if (api !== null && api !== undefined) api.clearTextSelection();
+    }
+
+    return h(
+      'div',
+      { className: 'harness-fill' },
+      h(
+        'div',
+        { className: 'harness-bar' },
+        h('span', { className: 'harness-title' }, 'client.viewer.js'),
+        h('span', null, fixture.split('/').pop() + ' · ' + lang),
+        h('span', { className: 'harness-sep' }),
+        h('button', { type: 'button', 'data-testid': 'zoom-out', onClick: () => changeZoom(-0.25) }, '−'),
+        h('button', { type: 'button', 'data-testid': 'zoom-in', onClick: () => changeZoom(0.25) }, '+'),
+        h('button', { type: 'button', 'data-testid': 'zoom-fit', onClick: () => setZoom(1) }, 'fit'),
+        h('button', { type: 'button', 'data-testid': 'prev-page', onClick: () => goToPage(-1) }, 'prev'),
+        h('button', { type: 'button', 'data-testid': 'next-page', onClick: () => goToPage(1) }, 'next'),
+        h('button', { type: 'button', 'data-testid': 'clear-selection', onClick: clearSelection }, 'clear selection'),
+        h('span', { className: 'harness-status', id: 'harness-status' }, statusText),
+      ),
+      h(
+        'div',
+        { className: 'harness-viewer-wrap' },
+        h(PdfViewer, {
+          bytes: bytes,
+          vendorBase: '/vendor/',
+          lang: lang,
+          zoom: zoom,
+          className: 'harness-viewer',
+          renderPageOverlay: function renderPageOverlay(page, size) {
+            if (page !== 2) return null;
+            return h(
+              'div',
+              {
+                className: 'harness-overlay-marker',
+                'data-testid': 'overlay-page-2',
+                'data-page-size': size.width.toFixed(0) + 'x' + size.height.toFixed(0),
+              },
+              'overlay p2',
+            );
+          },
+          onDocumentReady: onDocumentReady,
+          onPageChange: onPageChange,
+          onSelection: onSelection,
+          apiRef: apiRef,
+        }),
+      ),
+      selection === null
+        ? null
+        : h(
+            'pre',
+            {
+              'data-testid': 'selection-json',
+              style: {
+                position: 'absolute',
+                left: '12px',
+                bottom: '12px',
+                maxWidth: '40vw',
+                margin: 0,
+                padding: '6px',
+                fontSize: '10px',
+                background: 'rgba(255,255,255,.92)',
+                border: '1px solid #ccc',
+                borderRadius: '6px',
+                color: '#222',
+                zIndex: 3000,
+                whiteSpace: 'pre-wrap',
+              },
+            },
+            JSON.stringify(selection, null, 2),
+          ),
+    );
+  }
+
+  /** Boot the scenario: load the chunk, load the fixture, mount the viewer. */
+  async function boot() {
+    let viewerModule;
+    try {
+      viewerModule = await window.__dprRequireChunk('./client.viewer.js');
+    } catch (error) {
+      harness.missingChunk('client.viewer.js', error);
+      return;
+    }
+    const PdfViewer = viewerModule !== null && viewerModule !== undefined ? viewerModule.PdfViewer : undefined;
+    if (typeof PdfViewer !== 'function') {
+      harness.fatal('client.viewer.js does not export PdfViewer', 'exports: ' + JSON.stringify(Object.keys(viewerModule || {})));
+      return;
+    }
+
+    let bytes;
+    try {
+      bytes = await harness.fetchFixture(fixture);
+    } catch (error) {
+      harness.fatal('Could not load fixture ' + fixture, error);
+      return;
+    }
+    probe.bytesLength = bytes.length;
+    window.__dprBytesLength = bytes.length;
+
+    const apiRef = { current: null };
+    window.__dprViewerApi = apiRef;
+
+    const root = ReactDOM.createRoot(document.getElementById('mount'));
+    root.render(h(Boundary, null, h(ViewerHarness, { bytes: bytes, apiRef: apiRef, PdfViewer: PdfViewer })));
+    // The scenario page is mounted even when the PDF later fails to parse;
+    // probe.ready/onDocumentReady report document state separately.
+    harness.setState('running');
+    harness.status('viewer mounted', 'info');
+  }
+
+  boot().catch(function (error) {
+    if (document.body.dataset.harnessState !== 'missing-chunk' && document.body.dataset.harnessState !== 'fatal') {
+      harness.fatal('viewer scenario crashed', error);
+    }
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+This file is not a PDF.
+
+It exists so the paper library upload validation can be tested with a
+real file that has no %PDF- header. The library should show a localized
+"not a PDF" error and keep the previous list unchanged.

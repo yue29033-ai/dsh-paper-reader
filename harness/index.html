@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>dsh-paper-reader · harness</title>
+<style>
+  :root { color-scheme: light dark; }
+  body {
+    margin: 0;
+    padding: 32px;
+    background: #f6f7f9;
+    color: #101114;
+    font: 14px/1.6 -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    body { background: #101012; color: #e8e8ea; }
+    .card { background: #1b1b1e !important; border-color: #2e2e33 !important; }
+    a { color: #8aa4ff; }
+    code { background: #26262b; }
+  }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .sub { color: #6b6f76; margin: 0 0 24px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; max-width: 1200px; }
+  .card {
+    padding: 14px 16px;
+    border: 1px solid #e2e4e8;
+    border-radius: 12px;
+    background: #fff;
+  }
+  .card h2 { margin: 0 0 6px; font-size: 15px; }
+  .card p { margin: 0 0 10px; color: #6b6f76; font-size: 12.5px; }
+  .card a { display: inline-block; margin: 0 10px 4px 0; font-weight: 600; }
+  code { padding: 1px 5px; border-radius: 4px; background: #f0f1f4; font-size: 12px; }
+  .hint { max-width: 1200px; margin-top: 26px; color: #6b6f76; font-size: 12.5px; }
+</style>
+</head>
+<body>
+<h1>dsh-paper-reader · standalone harness</h1>
+<p class="sub">The plugin's client chunks, exercised in a plain browser without the DSH Host/GUI.
+  All state is local to this origin; nothing here talks to the running GUI.</p>
+
+<div class="grid">
+  <div class="card">
+    <h2>viewer · <code>client.viewer.js</code></h2>
+    <p>PdfViewer with a fixture PDF: canvas render, text layer, selection payload, zoom, page API, overlay hook, malformed-PDF error state.</p>
+    <a href="/harness/pages/viewer.html">en paper</a>
+    <a href="/harness/pages/viewer.html?fixture=/fixtures/paper-zh.pdf">zh paper</a>
+    <a href="/harness/pages/viewer.html?fixture=/fixtures/corrupt.pdf">corrupt.pdf</a>
+    <a href="/harness/pages/viewer.html?lang=en&amp;fixture=/fixtures/paper-en.pdf">en UI</a>
+  </div>
+  <div class="card">
+    <h2>annotations · <code>client.annotations.js</code></h2>
+    <p>Selection menu (3 actions), highlight layer, note composer, notes panel, ask prompt language, localStorage persistence.</p>
+    <a href="/harness/pages/annotations.html">zh</a>
+    <a href="/harness/pages/annotations.html?lang=en">en</a>
+    <a href="/harness/pages/annotations.html?paper=manual-check">fresh paper id</a>
+  </div>
+  <div class="card">
+    <h2>library · <code>client.library.js</code></h2>
+    <p>PaperLibrary + IndexedDB store: upload validation, list, open, delete confirmation, persistence across reload.</p>
+    <a href="/harness/pages/library.html">zh</a>
+    <a href="/harness/pages/library.html?lang=en">en</a>
+  </div>
+  <div class="card">
+    <h2>integration · <code>client.app.js</code></h2>
+    <p>The app shell mounted with a fake <code>core</code> face over a seeded paper library; <code>?plugin=1</code> applies <code>client.js</code> to a fake Cordis context.</p>
+    <a href="/harness/pages/integration.html">mount app</a>
+    <a href="/harness/pages/integration.html?lang=en">en</a>
+    <a href="/harness/pages/integration.html?plugin=1">plugin apply</a>
+  </div>
+</div>
+
+<div class="hint">
+  <p><b>Automated suite:</b> <code>bash tests/run.sh</code> (starts this server itself, drives the pages with Playwright/Chrome, writes screenshots to <code>tests/screenshots/</code>).</p>
+  <p><b>Fixtures:</b> <code>/fixtures/paper-en.pdf</code> (two-column, serif+sans, figure, table, math symbols),
+    <code>/fixtures/paper-zh.pdf</code> (CJK + mixed Latin, several sizes),
+    <code>/fixtures/corrupt.pdf</code> (parse failure), <code>/fixtures/not-a-paper.txt</code> (bad upload).
+    Regenerate with <code>node fixtures/src/make-fixtures.mjs</code>.</p>
+  <p><b>Query params:</b> <code>?lang=en</code> switches UI language on every page; <code>?theme=dark</code> uses the dark token set; viewer takes <code>?fixture=</code>; annotations takes <code>?paper=</code>.</p>
+</div>
+</body>
+</html>

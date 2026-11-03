@@ -1,0 +1,254 @@
+{
+  "host": "http://127.0.0.1:54001",
+  "startedAt": "2026-11-03T07:05:59.381Z",
+  "durationMs": 43257,
+  "results": [
+    {
+      "lang": "zh",
+      "section": "open GUI",
+      "name": "tokenized URL authenticates and boots the GUI",
+      "status": "pass",
+      "ms": 4201
+    },
+    {
+      "lang": "zh",
+      "section": "right sidebar → paper reader tab",
+      "name": "right sidebar guide card opens the paper reader tab",
+      "status": "pass",
+      "ms": 3291
+    },
+    {
+      "lang": "zh",
+      "section": "right sidebar → paper reader tab",
+      "name": "fresh profile shows the empty paper library",
+      "status": "pass",
+      "ms": 7
+    },
+    {
+      "lang": "zh",
+      "section": "upload + read",
+      "name": "uploading a PDF through the real library lists it",
+      "status": "pass",
+      "ms": 167
+    },
+    {
+      "lang": "zh",
+      "section": "upload + read",
+      "name": "opening the paper renders the PDF (painted canvases, text layer, page count)",
+      "status": "pass",
+      "ms": 3268
+    },
+    {
+      "lang": "zh",
+      "section": "upload + read",
+      "name": "host serves PDF.js from /paper-reader/vendor/ at the real page origin",
+      "status": "pass",
+      "ms": 44
+    },
+    {
+      "lang": "zh",
+      "section": "selection menu + actions",
+      "name": "selecting text in the real text layer shows the 3-action floating menu",
+      "status": "pass",
+      "ms": 87
+    },
+    {
+      "lang": "zh",
+      "section": "selection menu + actions",
+      "name": "highlighting shows the localized toast and increments the annotation badge",
+      "status": "pass",
+      "ms": 55
+    },
+    {
+      "lang": "zh",
+      "section": "selection menu + actions",
+      "name": "ask-in-chat appends the localized prompt to the real session composer",
+      "status": "pass",
+      "ms": 366
+    },
+    {
+      "lang": "zh",
+      "section": "selection menu + actions",
+      "name": "note composer saves a note and shows the localized toast",
+      "status": "pass",
+      "ms": 305
+    },
+    {
+      "lang": "zh",
+      "section": "notes panel, zoom, persistence, error state",
+      "name": "notes panel lists annotations and a row click jumps pages",
+      "status": "pass",
+      "ms": 791
+    },
+    {
+      "lang": "zh",
+      "section": "notes panel, zoom, persistence, error state",
+      "name": "zoom in and fit-width re-render the canvases",
+      "status": "pass",
+      "ms": 399
+    },
+    {
+      "lang": "zh",
+      "section": "notes panel, zoom, persistence, error state",
+      "name": "reload keeps the paper (IndexedDB) and annotations (localStorage)",
+      "status": "pass",
+      "ms": 7028
+    },
+    {
+      "lang": "zh",
+      "section": "notes panel, zoom, persistence, error state",
+      "name": "corrupt.pdf shows the localized reader error without breaking the app",
+      "status": "pass",
+      "ms": 605
+    },
+    {
+      "lang": "zh",
+      "section": "notes panel, zoom, persistence, error state",
+      "name": "console errors (informational)",
+      "status": "info",
+      "consoleErrors": []
+    },
+    {
+      "lang": "zh",
+      "section": "notes panel, zoom, persistence, error state",
+      "name": "GUI run produced no uncaught page errors",
+      "status": "pass",
+      "ms": 1
+    },
+    {
+      "lang": "en",
+      "section": "open GUI",
+      "name": "tokenized URL authenticates and boots the GUI",
+      "status": "pass",
+      "ms": 4180
+    },
+    {
+      "lang": "en",
+      "section": "right sidebar → paper reader tab",
+      "name": "right sidebar guide card opens the paper reader tab",
+      "status": "pass",
+      "ms": 2532
+    },
+    {
+      "lang": "en",
+      "section": "right sidebar → paper reader tab",
+      "name": "fresh profile shows the empty paper library",
+      "status": "pass",
+      "ms": 6
+    },
+    {
+      "lang": "en",
+      "section": "upload + read",
+      "name": "uploading a PDF through the real library lists it",
+      "status": "pass",
+      "ms": 108
+    },
+    {
+      "lang": "en",
+      "section": "upload + read",
+      "name": "opening the paper renders the PDF (painted canvases, text layer, page count)",
+      "status": "pass",
+      "ms": 3094
+    },
+    {
+      "lang": "en",
+      "section": "upload + read",
+      "name": "host serves PDF.js from /paper-reader/vendor/ at the real page origin",
+      "status": "pass",
+      "ms": 38
+    },
+    {
+      "lang": "en",
+      "section": "selection menu + actions",
+      "name": "selecting text in the real text layer shows the 3-action floating menu",
+      "status": "pass",
+      "ms": 99
+    },
+    {
+      "lang": "en",
+      "section": "selection menu + actions",
+      "name": "highlighting shows the localized toast and increments the annotation badge",
+      "status": "pass",
+      "ms": 50
+    },
+    {
+      "lang": "en",
+      "section": "selection menu + actions",
+      "name": "ask-in-chat appends the localized prompt to the real session composer",
+      "status": "pass",
+      "ms": 367
+    },
+    {
+      "lang": "en",
+      "section": "selection menu + actions",
+      "name": "note composer saves a note and shows the localized toast",
+      "status": "pass",
+      "ms": 288
+    },
+    {
+      "lang": "en",
+      "section": "notes panel, zoom, persistence, error state",
+      "name": "notes panel lists annotations and a row click jumps pages",
+      "status": "pass",
+      "ms": 537
+    },
+    {
+      "lang": "en",
+      "section": "notes panel, zoom, persistence, error state",
+      "name": "zoom in and fit-width re-render the canvases",
+      "status": "pass",
+      "ms": 450
+    },
+    {
+      "lang": "en",
+      "section": "notes panel, zoom, persistence, error state",
+      "name": "reload keeps the paper (IndexedDB) and annotations (localStorage)",
+      "status": "pass",
+      "ms": 5817
+    },
+    {
+      "lang": "en",
+      "section": "notes panel, zoom, persistence, error state",
+      "name": "corrupt.pdf shows the localized reader error without breaking the app",
+      "status": "pass",
+      "ms": 516
+    },
+    {
+      "lang": "en",
+      "section": "notes panel, zoom, persistence, error state",
+      "name": "console errors (informational)",
+      "status": "info",
+      "consoleErrors": []
+    },
+    {
+      "lang": "en",
+      "section": "notes panel, zoom, persistence, error state",
+      "name": "GUI run produced no uncaught page errors",
+      "status": "pass",
+      "ms": 0
+    }
+  ],
+  "screenshots": [
+    "tests/screenshots/gui-en-ask.png",
+    "tests/screenshots/gui-en-corrupt.png",
+    "tests/screenshots/gui-en-menu.png",
+    "tests/screenshots/gui-en-note.png",
+    "tests/screenshots/gui-en-notes-panel.png",
+    "tests/screenshots/gui-en-reader.png",
+    "tests/screenshots/gui-en-reload.png",
+    "tests/screenshots/gui-en-tab.png",
+    "tests/screenshots/gui-en-upload.png",
+    "tests/screenshots/gui-en-zoom.png",
+    "tests/screenshots/gui-zh-ask.png",
+    "tests/screenshots/gui-zh-corrupt.png",
+    "tests/screenshots/gui-zh-menu.png",
+    "tests/screenshots/gui-zh-note.png",
+    "tests/screenshots/gui-zh-notes-panel.png",
+    "tests/screenshots/gui-zh-reader.png",
+    "tests/screenshots/gui-zh-reload.png",
+    "tests/screenshots/gui-zh-tab.png",
+    "tests/screenshots/gui-zh-upload.png",
+    "tests/screenshots/gui-zh-zoom.png"
+  ],
+  "profileMode": "fresh-per-locale"
+}

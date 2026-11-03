@@ -1,0 +1,6 @@
+# dsh-paper-reader bundle patch: one Host row serving the vendored PDF.js
+# assets; the Client half registers the right-Sidebar tab through the
+# shipped ui-sidebar-right registry.
+- insert:
+    - id: paper-reader
+      name: 'dsh-paper-reader'

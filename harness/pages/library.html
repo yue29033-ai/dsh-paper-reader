@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>harness · library chunk</title>
+<link rel="stylesheet" href="/harness/harness.css">
+<style>
+  .harness-lib-layout {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    background: var(--dsw-alias-bg-base);
+  }
+  .harness-lib-panel {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    padding: 12px;
+  }
+  .harness-lib-opened {
+    flex: 0 0 auto;
+    max-height: 32%;
+    margin: 0;
+    padding: 8px 12px;
+    overflow: auto;
+    border-top: 1px solid var(--dsw-alias-border-l2);
+    background: var(--dsw-alias-bg-layer-1);
+    color: var(--dsw-alias-label-secondary);
+    font: 11px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="mount" class="harness-mount"></div>
+</div>
+<pre id="probe" class="harness-probe" data-testid="probe" hidden></pre>
+
+<script src="/harness/shim.js"></script>
+<script src="/harness/umd/react.production.min.js"></script>
+<script src="/harness/umd/react-dom.production.min.js"></script>
+<script src="/harness/page-utils.js"></script>
+<script type="module">
+  /*
+   * Scenario: lib/client.library.js alone.
+   *
+   * Mounts `PaperLibrary` over a real `createPaperStore()` (IndexedDB). Upload,
+   * open, list, delete and inline-confirm flows are exercised through the real
+   * components; the harness page mirrors the store snapshot into the probe and
+   * reads opened bytes back out so the tests can verify them.
+   *
+   * URLs:  library.html?lang=zh|en
+   *
+   * Test affordances:
+   *   window.__dprLibrary.store / formatBytes
+   *   window.__dprLibrary.opened     — { meta, byteLength, header } after onOpen
+   *   window.__dprResetLibrary()     — delete the IndexedDB database
+   */
+  const harness = window.__dprHarness;
+  const probe = window.__dprProbe;
+  const h = React.createElement;
+
+  const params = harness.params;
+  const lang = params.get('lang') === 'en' ? 'en' : 'zh';
+
+  Object.assign(probe, {
+    page: 'library',
+    chunk: 'client.library.js',
+    lang: lang,
+    exports: [],
+    snapshot: { papers: [], loaded: false },
+    opened: null,
+    formatBytes: {},
+    errors: probe.errors,
+  });
+
+  harness.h = h;
+  const Boundary = harness.ErrorBoundary(React);
+
+  /** Delete the harness database so each scenario starts from a known state. */
+  window.__dprResetLibrary = function resetLibrary() {
+    return new Promise(function (resolve) {
+      const request = window.indexedDB.deleteDatabase('dsh-paper-reader');
+      request.onsuccess = function () {
+        resolve(true);
+      };
+      request.onerror = function () {
+        resolve(false);
+      };
+      request.onblocked = function () {
+        resolve('blocked');
+      };
+    });
+  };
+
+  /** Boot: load the chunk, init the store, mount the library UI. */
+  async function boot() {
+    let library;
+    try {
+      library = await window.__dprRequireChunk('./client.library.js');
+    } catch (error) {
+      harness.missingChunk('client.library.js', error);
+      return;
+    }
+    const exports = library !== null && library !== undefined ? Object.keys(library) : [];
+    probe.exports = exports;
+    const missing = ['createPaperStore', 'PaperLibrary', 'formatBytes'].filter((name) => typeof library[name] !== 'function');
+    if (missing.length > 0) {
+      harness.fatal('client.library.js is missing exports: ' + missing.join(', '), 'got: ' + JSON.stringify(exports));
+      return;
+    }
+
+    const store = library.createPaperStore();
+    const formatBytes = library.formatBytes;
+    probe.formatBytes = {
+      '0': formatBytes(0),
+      '1023': formatBytes(1023),
+      '1024': formatBytes(1024),
+      '1536': formatBytes(1536),
+      '1048576': formatBytes(1048576),
+      '1572864': formatBytes(1572864),
+    };
+    window.__dprLibrary = { store: store, formatBytes: formatBytes, opened: null };
+
+    function publish() {
+      const snapshot = store.getSnapshot();
+      probe.snapshot = snapshot;
+      harness.debug('library', {
+        loaded: snapshot.loaded,
+        papers: snapshot.papers.map((paper) => ({ id: paper.id, name: paper.name, size: paper.size })),
+        error: snapshot.error ?? null,
+      });
+    }
+    store.subscribe(publish);
+
+    /** Open callback: read the stored bytes back so tests can verify persistence. */
+    async function onOpen(meta) {
+      const opened = { meta: meta, byteLength: null, header: null, error: null };
+      try {
+        const bytes = await store.getBytes(meta.id);
+        opened.byteLength = bytes.length;
+        opened.header = String.fromCharCode(bytes[0], bytes[1], bytes[2], bytes[3], bytes[4]);
+      } catch (error) {
+        opened.error = error instanceof Error ? error.message : String(error);
+      }
+      window.__dprLibrary.opened = opened;
+      probe.opened = opened;
+      publish();
+    }
+
+    function LibraryHarness() {
+      const snapshot = React.useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
+      return h(
+        'div',
+        { className: 'harness-lib-layout' },
+        h(
+          'div',
+          { className: 'harness-lib-panel' },
+          h(library.PaperLibrary, { lang: lang, store: store, onOpen: onOpen }),
+        ),
+        h(
+          'pre',
+          { className: 'harness-lib-opened', 'data-testid': 'opened-paper' },
+          'opened: ' + JSON.stringify(probe.opened) + '\n' +
+            'papers: ' + snapshot.papers.length + ' · loaded: ' + snapshot.loaded + ' · error: ' + (snapshot.error ?? 'none'),
+        ),
+      );
+    }
+
+    await store.init();
+    publish();
+    const root = ReactDOM.createRoot(document.getElementById('mount'));
+    root.render(h(Boundary, null, h(LibraryHarness, null)));
+    harness.setState('running');
+    harness.status('library mounted · ' + probe.snapshot.papers.length + ' paper(s)', 'info');
+  }
+
+  boot().catch(function (error) {
+    if (document.body.dataset.harnessState !== 'missing-chunk' && document.body.dataset.harnessState !== 'fatal') {
+      harness.fatal('library scenario crashed', error);
+    }
+  });
+</script>
+</body>
+</html>

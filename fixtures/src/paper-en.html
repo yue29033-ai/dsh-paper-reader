@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Adaptive Sparse Attention for Efficient Long-Context Language Modeling</title>
+<style>
+  @page { size: letter; margin: 0.7in 0.65in 0.65in; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 9.6pt;
+    line-height: 1.34;
+    color: #111;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .head { text-align: center; margin-bottom: 14pt; }
+  h1 {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 19pt;
+    font-weight: 700;
+    letter-spacing: -0.2pt;
+    line-height: 1.16;
+    margin: 0 0 8pt;
+    color: #0b0b0f;
+  }
+  .authors {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 10pt;
+    font-weight: 500;
+    margin: 0 0 4pt;
+  }
+  .affil { font-size: 8.6pt; color: #444; margin: 0 0 2pt; }
+  .corresp { font-size: 8.2pt; color: #555; font-style: italic; margin: 0; }
+  .rule { border: 0; border-top: 0.6pt solid #999; margin: 10pt 0 9pt; }
+  .abstract {
+    margin: 0 auto 10pt;
+    max-width: 6.6in;
+    font-size: 9.3pt;
+    line-height: 1.36;
+  }
+  .abstract .label {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-weight: 700;
+    font-size: 9pt;
+    letter-spacing: 0.4pt;
+    text-transform: uppercase;
+  }
+  .keywords { font-size: 8.8pt; margin: 0 auto; max-width: 6.6in; color: #222; }
+  .two-col { column-count: 2; column-gap: 0.30in; }
+  h2 {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 10.6pt;
+    font-weight: 700;
+    margin: 9pt 0 4pt;
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+  h3 {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 9.6pt;
+    font-weight: 600;
+    margin: 7pt 0 3pt;
+    break-after: avoid;
+  }
+  p { margin: 0 0 5pt; text-align: justify; hyphens: auto; }
+  .math { font-family: 'Times New Roman', Times, serif; font-style: italic; white-space: nowrap; }
+  .math i, .math .op { font-style: italic; }
+  .display-math {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 10.4pt;
+    text-align: center;
+    margin: 7pt 0;
+    break-inside: avoid;
+  }
+  .display-math .num { font-style: normal; font-size: 8pt; color: #333; margin-left: 8pt; }
+  figure {
+    margin: 7pt 0 9pt;
+    break-inside: avoid;
+    padding: 5pt;
+    border: 0.5pt solid #c8c8c8;
+    background: #fbfbfd;
+  }
+  figure svg { display: block; width: 100%; height: auto; }
+  figcaption {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 7.9pt;
+    line-height: 1.28;
+    color: #222;
+    margin-top: 5pt;
+  }
+  figcaption b { font-weight: 700; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 7.9pt;
+    margin: 4pt 0 7pt;
+    break-inside: avoid;
+  }
+  caption {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    caption-side: top;
+    text-align: left;
+    font-size: 7.9pt;
+    line-height: 1.28;
+    margin-bottom: 3pt;
+  }
+  th, td { padding: 2.4pt 3pt; text-align: right; border-bottom: 0.4pt solid #d9d9d9; }
+  th:first-child, td:first-child { text-align: left; }
+  thead th { border-top: 0.8pt solid #555; border-bottom: 0.6pt solid #555; font-weight: 700; }
+  tbody tr:last-child td { border-bottom: 0.8pt solid #555; }
+  .footnote {
+    font-size: 7.6pt;
+    line-height: 1.25;
+    color: #333;
+    border-top: 0.4pt solid #bbb;
+    margin-top: 8pt;
+    padding-top: 4pt;
+  }
+  .references { font-size: 8pt; line-height: 1.28; }
+  .references p { margin: 0 0 3pt; padding-left: 14pt; text-indent: -14pt; text-align: left; }
+  .small { font-size: 8.6pt; }
+  .pagebreak { break-before: page; }
+</style>
+</head>
+<body>
+
+<div class="head">
+  <h1>Adaptive Sparse Attention for Efficient<br>Long-Context Language Modeling</h1>
+  <p class="authors">Mira Okonkwo<sup>1</sup> &nbsp; Daniel R. Whitfield<sup>1,2</sup> &nbsp; Mei-Ling Chen<sup>2</sup> &nbsp; Jonas H. Berg<sup>1</sup></p>
+  <p class="affil"><sup>1</sup>Department of Computer Science, Northbridge University &nbsp;&nbsp; <sup>2</sup>Institute for Language Systems, Port Ellery</p>
+  <p class="corresp">Correspondence: {mira.okonkwo, d.whitfield}@northbridge.example.edu</p>
+</div>
+<hr class="rule">
+
+<div class="abstract">
+  <p><span class="label">Abstract.</span> Long-context language models spend most of their attention budget on a small, input-dependent subset of token pairs. We introduce <b>Adaptive Sparse Attention (ASA)</b>, a drop-in attention layer that learns a per-head routing mask from a cheap low-rank sketch of the query–key product. ASA reduces the quadratic cost of self-attention to <span class="math">O(n&nbsp;·&nbsp;k)</span> with <span class="math">k&nbsp;≈&nbsp;log&nbsp;n</span>, while retaining the expressivity of dense attention on the pairs the model actually uses. Across three long-document benchmarks, ASA matches dense baselines within 0.3 points of accuracy while cutting attention FLOPs by 4.8× and peak memory by 3.1× at a 32k-token context. Ablations show that the routing sketch, not the sparsity pattern itself, accounts for most of the gain.</p>
+  <p class="keywords"><b>Keywords:</b> sparse attention, long context, efficient transformers, retrieval routing, language modeling</p>
+</div>
+<hr class="rule">
+
+<div class="two-col">
+
+<h2>1&nbsp;&nbsp;Introduction</h2>
+<p>Transformer language models scale their compute quadratically with sequence length, which makes long-context inference dominated by attention rather than by the feed-forward blocks. Prior work has attacked this cost with fixed sparsity patterns, low-rank approximations, or retrieval over a compressed memory. Fixed patterns are cheap but content-blind; retrieval is content-aware but adds a discrete, non-differentiable stage to training. We ask whether a model can learn where to attend with a budget that grows only logarithmically in sequence length.</p>
+<p>Our starting observation is that the distribution of attention mass is extremely skewed. On documents from arXiv and PubMed, the top 5% of query–key pairs receive more than 92% of the total attention mass on average, and the identity of those pairs changes across layers. A fixed banded pattern therefore wastes most of its budget, while a content-dependent router can spend it where the mass actually is.</p>
+<p>We formalize this as a routing problem. For each head <span class="math">h</span> and query position <span class="math">i</span>, ASA computes a low-rank sketch <span class="math">s<sub>i</sub>&nbsp;=&nbsp;U<sub>h</sub><sup>⊤</sup>q<sub>i</sub></span> and scores key blocks against that sketch before materializing the full <span class="math">n&nbsp;×&nbsp;n</span> matrix. Only the top-<span class="math">k</span> blocks are gathered, giving a dense sub-matrix of shape <span class="math">k&nbsp;×&nbsp;b</span> per query block. The router is trained end-to-end with a straight-through estimator and a load-balancing regularizer.</p>
+
+<figure>
+  <svg viewBox="0 0 560 190" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Attention mass concentration and routing diagram">
+    <rect x="0" y="0" width="560" height="190" fill="#ffffff"/>
+    <!-- left: concentration curve -->
+    <g>
+      <line x1="46" y1="24" x2="46" y2="140" stroke="#333" stroke-width="1"/>
+      <line x1="46" y1="140" x2="250" y2="140" stroke="#333" stroke-width="1"/>
+      <text x="42" y="18" font-family="Helvetica" font-size="9" text-anchor="middle" fill="#222">1.0</text>
+      <text x="42" y="143" font-family="Helvetica" font-size="9" text-anchor="middle" fill="#222">0</text>
+      <text x="148" y="160" font-family="Helvetica" font-size="9" text-anchor="middle" fill="#222">fraction of pairs (sorted)</text>
+      <text x="20" y="86" font-family="Helvetica" font-size="9" text-anchor="middle" fill="#222" transform="rotate(-90 20 86)">cumulative mass</text>
+      <path d="M46 140 L58 52 L74 40 L104 33 L150 28 L206 25 L250 24" fill="none" stroke="#4d6bfe" stroke-width="2"/>
+      <circle cx="58" cy="52" r="2.6" fill="#4d6bfe"/>
+      <circle cx="74" cy="40" r="2.6" fill="#4d6bfe"/>
+      <circle cx="104" cy="33" r="2.6" fill="#4d6bfe"/>
+      <text x="150" y="46" font-family="Helvetica" font-size="8.4" fill="#4d6bfe">top 5% → 92% mass</text>
+    </g>
+    <!-- right: routing diagram -->
+    <g transform="translate(300,18)">
+      <rect x="0" y="0" width="44" height="66" rx="5" fill="#eef2ff" stroke="#7c8cf8"/>
+      <text x="22" y="38" font-family="Helvetica" font-size="9" text-anchor="middle" fill="#334">Q</text>
+      <rect x="64" y="0" width="44" height="66" rx="5" fill="#eef2ff" stroke="#7c8cf8"/>
+      <text x="86" y="38" font-family="Helvetica" font-size="9" text-anchor="middle" fill="#334">K</text>
+      <rect x="128" y="8" width="40" height="50" rx="5" fill="#f4f4f6" stroke="#999"/>
+      <text x="148" y="29" font-family="Helvetica" font-size="8" text-anchor="middle" fill="#333">low-rank</text>
+      <text x="148" y="40" font-family="Helvetica" font-size="8" text-anchor="middle" fill="#333">sketch</text>
+      <path d="M44 33 L64 33" stroke="#555" stroke-width="1.4" marker-end="url(#arrow)"/>
+      <path d="M108 33 L128 33" stroke="#555" stroke-width="1.4" marker-end="url(#arrow)"/>
+      <path d="M168 33 L196 33" stroke="#555" stroke-width="1.4" marker-end="url(#arrow)"/>
+      <rect x="196" y="4" width="58" height="58" rx="5" fill="#fff7e6" stroke="#e0a53a"/>
+      <text x="225" y="27" font-family="Helvetica" font-size="8.2" text-anchor="middle" fill="#5a3d00">top-k block</text>
+      <text x="225" y="39" font-family="Helvetica" font-size="8.2" text-anchor="middle" fill="#5a3d00">gather</text>
+      <path d="M254 33 L272 33" stroke="#555" stroke-width="1.4" marker-end="url(#arrow)"/>
+      <rect x="272" y="4" width="58" height="58" rx="5" fill="#e9f7ee" stroke="#4caf6d"/>
+      <text x="301" y="27" font-family="Helvetica" font-size="8.2" text-anchor="middle" fill="#1c5c30">sparse</text>
+      <text x="301" y="39" font-family="Helvetica" font-size="8.2" text-anchor="middle" fill="#1c5c30">softmax</text>
+      <defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 z" fill="#555"/>
+        </marker>
+      </defs>
+    </g>
+  </svg>
+  <figcaption><b>Figure 1.</b> Left: cumulative attention mass over query–key pairs averaged across layers and heads on 512 arXiv documents. Right: the ASA layer. A low-rank sketch scores key blocks; only the top-<i>k</i> blocks are gathered and passed to a dense softmax over the selected sub-matrix.</figcaption>
+</figure>
+
+<h2>2&nbsp;&nbsp;Method</h2>
+<h3>2.1&nbsp;&nbsp;Routing sketch</h3>
+<p>Let <span class="math">Q, K, V ∈ ℝ<sup>n×d</sup></span> be the projected queries, keys and values of one head. We project queries with a fixed random matrix <span class="math">U<sub>h</sub> ∈ ℝ<sup>d×r</sup></span> with <span class="math">r&nbsp;=&nbsp;32</span> and compute block scores</p>
+<p class="display-math">s<sub>i,j</sub> = (U<sub>h</sub><sup>⊤</sup> q<sub>i</sub>)<sup>⊤</sup> (U<sub>h</sub><sup>⊤</sup> k̄<sub>j</sub>),&nbsp;&nbsp; j ∈ {1, …, n/b}<span class="num">(1)</span></p>
+<p>where <span class="math">k̄<sub>j</sub></span> is the mean key of block <span class="math">j</span> with block size <span class="math">b&nbsp;=&nbsp;64</span>. The top-<span class="math">k</span> blocks by score are gathered per query block, with <span class="math">k&nbsp;=&nbsp;⌈2 log<sub>2</sub>(n/b)⌉</span>. Because <span class="math">r&nbsp;≪&nbsp;d</span>, scoring costs <span class="math">O(n<sup>2</sup>r/b)</span>, a small fraction of the full product.</p>
+<h3>2.2&nbsp;&nbsp;Straight-through routing</h3>
+<p>The top-<span class="math">k</span> operator is non-differentiable. We use the straight-through estimator <span class="math">∂m<sub>i,j</sub>/∂s<sub>i,j</sub>&nbsp;=&nbsp;1</span> for selected blocks and add a load-balancing term <span class="math">L<sub>bal</sub>&nbsp;=&nbsp;∑<sub>j</sub> (f<sub>j</sub>&nbsp;−&nbsp;1/B)<sup>2</sup></span> where <span class="math">f<sub>j</sub></span> is the fraction of queries routed to block <span class="math">j</span>. The total objective is</p>
+<p class="display-math">L(θ) = L<sub>lm</sub>(θ) + λ<sub>1</sub> L<sub>bal</sub>(θ) + λ<sub>2</sub> ‖θ<sub>route</sub>‖<sup>2</sup>, &nbsp;&nbsp; λ<sub>1</sub> = 0.01<span class="num">(2)</span></p>
+<p>Gradients flow through gathered values; the router learns from the load-balancing signal and the residual gradient that reaches the sketch projection. In practice we find <span class="math">λ<sub>1</sub></span> between <span class="math">10<sup>−3</sup></span> and <span class="math">10<sup>−1</sup></span> to be stable, while larger values collapse the routing distribution.</p>
+
+<table>
+  <caption><b>Table 1.</b> Long-context results at 32k tokens. Accuracy averages three seeds; FLOPs are attention-only and normalized to dense attention. ASA uses <i>k</i> = 9 blocks of 64 tokens.</caption>
+  <thead>
+    <tr><th>Model</th><th>Params</th><th>NarrativeQA</th><th>QMSum</th><th>SCROLLS</th><th>Attn FLOPs</th><th>Memory</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Dense (baseline)</td><td>355M</td><td>31.8</td><td>21.4</td><td>62.9</td><td>1.00×</td><td>1.00×</td></tr>
+    <tr><td>Sliding window</td><td>355M</td><td>26.1</td><td>19.7</td><td>58.2</td><td>0.11×</td><td>0.21×</td></tr>
+    <tr><td>Low-rank (Linformer)</td><td>358M</td><td>29.4</td><td>20.2</td><td>61.0</td><td>0.34×</td><td>0.42×</td></tr>
+    <tr><td>Block-sparse (fixed)</td><td>355M</td><td>30.2</td><td>20.6</td><td>62.1</td><td>0.23×</td><td>0.29×</td></tr>
+    <tr><td><b>ASA (ours)</b></td><td>356M</td><td><b>31.6</b></td><td><b>21.2</b></td><td><b>62.7</b></td><td><b>0.21×</b></td><td><b>0.32×</b></td></tr>
+  </tbody>
+</table>
+
+<h2>3&nbsp;&nbsp;Experiments</h2>
+<p>We train 355M-parameter decoder-only models with 32k-token context on a 180B-token mixture of books, web pages and scientific articles. All models share the tokenizer, data order and optimizer schedule; only the attention layer differs. Training uses 64 A100-40GB GPUs for approximately 36 hours per run, and every reported number averages three seeds. We evaluate on NarrativeQA, QMSum and the SCROLLS aggregate, plus a held-out perplexity split.</p>
+<p>Table 1 summarizes the comparison. ASA recovers 99.4% of dense accuracy on NarrativeQA and 99.1% on QMSum while reducing attention FLOPs to 0.21× and peak memory to 0.32× of the dense model. Fixed block sparsity reaches a similar FLOP budget but trails by 1.4 points on average, which we attribute to its inability to move budget across layers.</p>
+<p>At longer contexts the gap widens: at 64k tokens dense attention no longer fits on a single 40GB device with a batch size above one, whereas ASA continues to train with a batch of 8. This is the practical regime we target: not a cheaper attention at short lengths, but a path to using long contexts without re-engineering the training stack.</p>
+
+<h2>4&nbsp;&nbsp;Ablations</h2>
+<p>We remove one component at a time. Replacing the learned sketch with a fixed random projection drops NarrativeQA by 0.2 points but keeps most of the FLOP savings, and freezing the router after 10k steps costs 0.4 points. This suggests the routing signal is easy to learn and that most of the benefit comes from the low-rank sketch that makes routing cheap, a finding we did not anticipate.</p>
+<p>Increasing <span class="math">k</span> from 9 to 16 changes accuracy by less than 0.1 points while doubling gathered FLOPs, and decreasing <span class="math">k</span> to 5 costs 0.7 points. The memory advantage is less sensitive: because gathered blocks are packed into a dense buffer, peak memory follows <span class="math">k·b</span> rather than the full sequence length, so all three settings stay below 0.4× dense memory.</p>
+
+<h2>5&nbsp;&nbsp;Limitations and related work</h2>
+<p>ASA assumes that attention mass concentrates in contiguous key blocks, which holds for natural language but may fail for code with long-range identifier references or for structured tables. We have not evaluated instruction-tuned models, where routing patterns may be sharper and the load-balancing regularizer may need retuning. Our implementation also relies on block-aligned masks, so variable-length packing requires padding to block boundaries and wastes up to <span class="math">b−1</span> positions per sequence.</p>
+<p>Sparse and low-rank attention have a long history: sliding-window attention, fixed block patterns, learned routing, and retrieval-augmented memory all trade exactness for cost. Our contribution is to make routing cheap enough that it disappears into the background: the sketch is a single 32-dimensional projection, and scoring it costs less than one percent of the dense product at 32k tokens.</p>
+
+<h2>6&nbsp;&nbsp;Conclusion</h2>
+<p>We presented Adaptive Sparse Attention, a content-dependent attention layer whose cost grows nearly linearly in sequence length while preserving dense-level accuracy. The main lesson is that routing does not need to be expensive to be effective. We release the training recipe and inference kernel, and we hope the sketch-and-gather formulation provides a useful baseline for future long-context architectures.</p>
+
+<div class="pagebreak"></div>
+
+<h2>References</h2>
+<div class="references">
+  <p>[1] Agostinelli, A., et al. (2023). MusicLM: Generating music from text. <i>arXiv:2301.11325</i>.</p>
+  <p>[2] Beltagy, I., Peters, M. E., and Cohan, A. (2020). Longformer: The long-document transformer. <i>arXiv:2004.05150</i>.</p>
+  <p>[3] Choromanski, K., et al. (2021). Rethinking attention with performers. In <i>ICLR</i>.</p>
+  <p>[4] Dao, T., et al. (2022). FlashAttention: Fast and memory-efficient exact attention with IO-awareness. In <i>NeurIPS</i>.</p>
+  <p>[5] Kitaev, N., Kaiser, Ł., and Levskaya, A. (2020). Reformer: The efficient transformer. In <i>ICLR</i>.</p>
+  <p>[6] Lewis, P., et al. (2020). Retrieval-augmented generation for knowledge-intensive NLP tasks. In <i>NeurIPS</i>.</p>
+  <p>[7] Roy, A., et al. (2021). Prefix-to-prefix: A study of attention routing in long documents. <i>Journal of Language Systems</i>, 14(2), 88–104.</p>
+  <p>[8] Wang, S., et al. (2020). Linformer: Self-attention with linear complexity. <i>arXiv:2006.04768</i>.</p>
+  <p>[9] Zaheer, M., et al. (2020). Big Bird: Transformers for longer sequences. In <i>NeurIPS</i>.</p>
+</div>
+
+<div class="footnote">
+  <p>This work was supported in part by a Northbridge University faculty research grant and compute credits from the Port Ellery Institute. The authors thank the anonymous reviewers for their careful reading and for suggesting the frozen-router ablation. Code and checkpoints are available at <i>northbridge.example.edu/asa</i>. Accepted for publication, Proceedings of the 12th Conference on Efficient Language Systems (ELS 2026).</p>
+</div>
+
+</div>
+
+</body>
+</html>

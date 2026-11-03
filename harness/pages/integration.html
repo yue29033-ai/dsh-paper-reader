@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>harness · integration (client.app.js)</title>
+<link rel="stylesheet" href="/harness/harness.css">
+<style>
+  .harness-int-layout {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .harness-int-app {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+  }
+  .harness-int-seed {
+    flex: 0 0 auto;
+    max-height: 22%;
+    margin: 0;
+    padding: 6px 12px;
+    overflow: auto;
+    border-top: 1px solid var(--dsw-alias-border-l2);
+    background: var(--dsw-alias-bg-layer-1);
+    color: var(--dsw-alias-label-tertiary);
+    font: 10px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
+    white-space: pre-wrap;
+  }
+  .harness-int-plugin {
+    padding: 16px;
+    overflow: auto;
+    color: var(--dsw-alias-label-secondary);
+    font: 12px/1.6 -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+  .harness-int-plugin pre {
+    padding: 8px;
+    border: 1px solid var(--dsw-alias-border-l2);
+    border-radius: 8px;
+    background: var(--dsw-alias-bg-layer-2);
+    white-space: pre-wrap;
+    word-break: break-word;
+    font: 11px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="mount" class="harness-mount"></div>
+</div>
+<pre id="probe" class="harness-probe" data-testid="probe" hidden></pre>
+
+<script src="/harness/shim.js"></script>
+<script src="/harness/umd/react.production.min.js"></script>
+<script src="/harness/umd/react-dom.production.min.js"></script>
+<script src="/harness/page-utils.js"></script>
+<script type="module">
+  /*
+   * Scenario: integration — mount the real `lib/client.app.js` shell with a fake
+   * `core` face, over a real IndexedDB paper store seeded with a fixture.
+   *
+   * The fake core is the contract shape from docs/INTERFACES.md §7:
+   *   { ctx: { locale, sessions, get }, sessionId, vendorBase,
+   *     askInSession(text), focusComposer() }
+   * Locale is a real external store, so `window.__dprSetLang('en')` changes the
+   * UI language live and the app re-renders (and the ask prompt language changes).
+   *
+   * URLs:
+   *   integration.html                    — mount client.app.js
+   *   integration.html?lang=en            — same, English UI
+   *   integration.html?plugin=1           — additionally load lib/client.js and
+   *                                         apply it to a fake Cordis context
+   *
+   * Test affordances:
+   *   window.__dprIntegration.core / .probe / .store
+   *   window.__dprSetLang(lang)
+   *   window.__askedText        — text the app passed to core.askInSession
+   *   window.__focusComposerCalls
+   *   window.__dprResetLibrary()
+   *   window.__dprSeedLibrary() — ensure the fixture paper is in IndexedDB
+   */
+  const harness = window.__dprHarness;
+  const probe = window.__dprProbe;
+  const h = React.createElement;
+
+  const params = harness.params;
+  const pluginMode = params.get('plugin') === '1';
+  const initialLang = params.get('lang') === 'en' ? 'en' : 'zh';
+  const SEED_FIXTURE = '/fixtures/paper-en.pdf';
+  const SEED_NAME = 'paper-en.pdf';
+
+  Object.assign(probe, {
+    page: 'integration',
+    chunk: 'client.app.js',
+    lang: initialLang,
+    appExports: [],
+    mounted: false,
+    seeded: null,
+    askedText: null,
+    focusComposerCalls: 0,
+    plugin: null,
+    upload: null,
+  });
+
+  harness.h = h;
+  const Boundary = harness.ErrorBoundary(React);
+
+  /** Fake locale service driving every locale subscriber (same shape as DSH). */
+  const localeSubscribers = new Set();
+  let localeState = { active: initialLang };
+  const fakeLocale = {
+    getLocale: function getLocale() {
+      return localeState;
+    },
+    subscribe: function subscribe(notify) {
+      localeSubscribers.add(notify);
+      return function unsubscribe() {
+        localeSubscribers.delete(notify);
+      };
+    },
+  };
+  function setLang(next) {
+    const lang = next === 'en' ? 'en' : 'zh';
+    if (localeState.active === lang) return;
+    localeState = { active: lang };
+    probe.lang = lang;
+    localeSubscribers.forEach((notify) => notify());
+  }
+  window.__dprSetLang = setLang;
+
+  /** The fake per-session `core` face (docs/INTERFACES.md §7 / BRIEF §3). */
+  const core = {
+    ctx: {
+      locale: fakeLocale,
+      sessions: {
+        scope: function scope() {
+          return {};
+        },
+      },
+      get: function get() {
+        return {};
+      },
+    },
+    sessionId: 'test-session',
+    vendorBase: '/vendor/',
+    askInSession: function askInSession(text) {
+      window.__askedText = text;
+      probe.askedText = text;
+      return true;
+    },
+    focusComposer: function focusComposer() {
+      window.__focusComposerCalls = (window.__focusComposerCalls || 0) + 1;
+      probe.focusComposerCalls += 1;
+    },
+  };
+  window.__dprIntegration = { core: core, probe: probe };
+
+  /** Delete the paper database (test helper for a known starting state). */
+  window.__dprResetLibrary = function resetLibrary() {
+    return new Promise(function (resolve) {
+      const request = window.indexedDB.deleteDatabase('dsh-paper-reader');
+      request.onsuccess = function () {
+        resolve(true);
+      };
+      request.onerror = function () {
+        resolve(false);
+      };
+      request.onblocked = function () {
+        resolve('blocked');
+      };
+    });
+  };
+
+  /**
+   * Ensure the fixture is present in the paper library. Uses the real
+   * `client.library.js` store when that chunk exists, so the app's own library
+   * view sees a paper even if the app starts on the library screen.
+   */
+  window.__dprSeedLibrary = async function seedLibrary() {
+    let library;
+    try {
+      library = await window.__dprRequireChunk('./client.library.js');
+    } catch (error) {
+      return { seeded: false, reason: 'library chunk unavailable: ' + (error && error.message ? error.message : String(error)) };
+    }
+    if (typeof library.createPaperStore !== 'function') return { seeded: false, reason: 'no createPaperStore export' };
+    const store = library.createPaperStore();
+    await store.init();
+    window.__dprIntegration.store = store;
+    const snapshot = store.getSnapshot();
+    if (snapshot.papers.some((paper) => paper.name === SEED_NAME)) {
+      return { seeded: true, existing: true, papers: snapshot.papers.length };
+    }
+    try {
+      const bytes = await harness.fetchFixture(SEED_FIXTURE);
+      const file = new File([bytes], SEED_NAME, { type: 'application/pdf' });
+      const meta = await store.save(file);
+      return { seeded: true, existing: false, meta: meta };
+    } catch (error) {
+      return { seeded: false, reason: 'save failed: ' + (error && error.message ? error.message : String(error)) };
+    }
+  };
+
+  /** Fake Cordis context used by `?plugin=1` to exercise client.js's apply(). */
+  function makeFakeCordis() {
+    const registered = { tabs: [], slots: [], slotInjects: [], effects: [] };
+    const fakeCtx = {
+      effect: function effect(fn, label) {
+        registered.effects.push(String(label ?? 'effect'));
+        const dispose = fn();
+        return typeof dispose === 'function' ? dispose : function noop() {};
+      },
+      sidebarRightTabs: {
+        register: function register(definition) {
+          registered.tabs.push(definition);
+          return function disposeTab() {};
+        },
+        openTab: function openTab() {
+          return { ok: true };
+        },
+      },
+      slots: {
+        inject: function inject(name, register) {
+          registered.slotInjects.push(name);
+          return typeof register === 'function' ? register() : function noop() {};
+        },
+        register: function register(seat, component) {
+          registered.slots.push({ name: seat.name, key: seat.key, component: component, inject: typeof seat.inject });
+          return function disposeSlot() {};
+        },
+      },
+      locale: fakeLocale,
+      sessions: core.ctx.sessions,
+      get: core.ctx.get,
+    };
+    return { ctx: fakeCtx, registered: registered };
+  }
+
+  /** Mount the app shell. */
+  async function mountApp(appModule) {
+    const appExports = appModule !== null && appModule !== undefined ? Object.keys(appModule) : [];
+    probe.appExports = appExports;
+    const PaperReaderApp = appModule.PaperReaderApp;
+    if (typeof PaperReaderApp !== 'function') {
+      harness.fatal('client.app.js does not export PaperReaderApp', 'got: ' + JSON.stringify(appExports));
+      return;
+    }
+
+    /** App host: locale + Suspense + error boundary + fake core wiring. */
+    function AppHost() {
+      const lang = React.useSyncExternalStore(
+        (notify) => fakeLocale.subscribe(notify),
+        () => fakeLocale.getLocale().active,
+        () => fakeLocale.getLocale().active,
+      );
+      return h(
+        'div',
+        { className: 'harness-int-layout', 'data-testid': 'integration-app' },
+        h(
+          'div',
+          { className: 'harness-int-app' },
+          h(
+            React.Suspense,
+            {
+              fallback: h('div', { className: 'harness-state', 'data-testid': 'app-loading' }, 'app chunk loading…'),
+            },
+            h(PaperReaderApp, { core: core, lang: lang }),
+          ),
+        ),
+        h(
+          'pre',
+          { className: 'harness-int-seed', 'data-testid': 'integration-seed' },
+          'fake core · session=' + core.sessionId + ' · lang=' + lang + ' · asked=' + JSON.stringify(probe.askedText),
+        ),
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('mount'));
+    root.render(h(Boundary, null, h(AppHost, null)));
+    probe.mounted = true;
+    harness.debug('integration', { mounted: true, appExports: appExports, lang: initialLang });
+    harness.setState('running');
+    harness.status('app mounted · ' + appExports.join(', '), 'info');
+  }
+
+  /** `?plugin=1` mode: exercise client.js registration against a fake Cordis ctx. */
+  function renderPluginReport(pluginModule, result) {
+    const tabs = result.registered.tabs.map((tab) => ({
+      id: tab.id,
+      kind: tab.kind,
+      title: typeof tab.title === 'function' ? tab.title() : tab.title,
+      guide: Array.isArray(tab.guide)
+        ? tab.guide.map((entry) => ({
+            id: entry.id,
+            order: entry.order,
+            title: typeof entry.title === 'function' ? entry.title() : entry.title,
+            description: typeof entry.description === 'function' ? entry.description() : entry.description,
+          }))
+        : [],
+    }));
+    const slots = result.registered.slots.map((slot) => ({ name: slot.name, key: slot.key }));
+    probe.plugin = {
+      inject: pluginModule.inject ?? null,
+      hasApply: typeof pluginModule.apply === 'function',
+      tabs: tabs,
+      slots: slots,
+      slotInjects: result.registered.slotInjects,
+      effects: result.registered.effects,
+    };
+    const mount = document.getElementById('mount');
+    mount.textContent = '';
+    const wrap = document.createElement('div');
+    wrap.className = 'harness-int-plugin';
+    wrap.dataset.testid = 'plugin-report';
+    const title = document.createElement('p');
+    title.textContent = 'client.js applied to a fake Cordis context:';
+    const pre = document.createElement('pre');
+    pre.dataset.testid = 'plugin-json';
+    pre.textContent = JSON.stringify(probe.plugin, null, 2);
+    wrap.appendChild(title);
+    wrap.appendChild(pre);
+    mount.appendChild(wrap);
+    harness.debug('plugin', probe.plugin);
+    harness.setState('running');
+    harness.status('client.js apply() captured', 'info');
+  }
+
+  /** Boot: seed the library, load client.app.js (and client.js in plugin mode), mount. */
+  async function boot() {
+    if (pluginMode) {
+      let pluginModule;
+      try {
+        pluginModule = await window.__dprRequireChunk('./client.js');
+      } catch (error) {
+        harness.missingChunk('client.js', error);
+        return;
+      }
+      if (pluginModule === null || typeof pluginModule !== 'object' || typeof pluginModule.apply !== 'function') {
+        harness.fatal('client.js does not export apply()', 'got: ' + JSON.stringify(pluginModule));
+        return;
+      }
+      const fake = makeFakeCordis();
+      pluginModule.apply(fake.ctx);
+      window.__dprPluginModule = pluginModule;
+      renderPluginReport(pluginModule, fake);
+      return;
+    }
+
+    const seed = await window.__dprSeedLibrary();
+    probe.seeded = seed;
+    harness.debug('seed', seed);
+
+    let appModule;
+    try {
+      appModule = await window.__dprRequireChunk('./client.app.js');
+    } catch (error) {
+      harness.missingChunk('client.app.js', error);
+      return;
+    }
+    await mountApp(appModule);
+  }
+
+  boot().catch(function (error) {
+    if (document.body.dataset.harnessState !== 'missing-chunk' && document.body.dataset.harnessState !== 'fatal') {
+      harness.fatal('integration scenario crashed', error);
+    }
+  });
+</script>
+</body>
+</html>

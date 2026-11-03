@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>面向长文档理解的自适应稀疏注意力机制研究</title>
+<style>
+  @page { size: a4; margin: 0.75in 0.8in 0.7in; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: 'Songti SC', 'STSong', 'SimSun', 'Noto Serif CJK SC', serif;
+    font-size: 10.5pt;
+    line-height: 1.72;
+    color: #151515;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .head { text-align: center; margin-bottom: 12pt; }
+  h1 {
+    font-family: 'PingFang SC', 'Heiti SC', 'Microsoft YaHei', sans-serif;
+    font-size: 19pt;
+    font-weight: 600;
+    letter-spacing: 0.5pt;
+    line-height: 1.34;
+    margin: 0 0 10pt;
+  }
+  .authors {
+    font-family: 'PingFang SC', 'Heiti SC', 'Microsoft YaHei', sans-serif;
+    font-size: 11pt;
+    margin: 0 0 4pt;
+  }
+  .affil {
+    font-family: 'PingFang SC', 'Heiti SC', 'Microsoft YaHei', sans-serif;
+    font-size: 9pt;
+    color: #4a4a4a;
+    margin: 0 0 2pt;
+  }
+  .contact { font-size: 8.6pt; color: #555; font-family: 'Times New Roman', Times, serif; margin: 0; }
+  .rule { border: 0; border-top: 0.7pt solid #8a8a8a; margin: 9pt 0 8pt; }
+  .abstract {
+    margin: 0 0 8pt;
+    padding: 8pt 12pt;
+    border-left: 2.4pt solid #4d6bfe;
+    background: #f6f8ff;
+    font-size: 9.8pt;
+    line-height: 1.66;
+  }
+  .abstract .label {
+    font-family: 'PingFang SC', 'Heiti SC', sans-serif;
+    font-weight: 600;
+    font-size: 10pt;
+  }
+  .keywords { font-size: 9.4pt; margin: 0 0 10pt; color: #222; }
+  .keywords b { font-family: 'PingFang SC', 'Heiti SC', sans-serif; font-weight: 600; }
+  h2 {
+    font-family: 'PingFang SC', 'Heiti SC', 'Microsoft YaHei', sans-serif;
+    font-size: 13pt;
+    font-weight: 600;
+    margin: 13pt 0 5pt;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+  h3 {
+    font-family: 'PingFang SC', 'Heiti SC', 'Microsoft YaHei', sans-serif;
+    font-size: 11pt;
+    font-weight: 600;
+    margin: 9pt 0 3pt;
+    break-after: avoid;
+  }
+  p { margin: 0 0 5pt; text-align: justify; }
+  .latin {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 10.8pt;
+    letter-spacing: 0.1pt;
+  }
+  .math {
+    font-family: 'Times New Roman', Times, serif;
+    font-style: italic;
+    white-space: nowrap;
+  }
+  .display-math {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 11pt;
+    text-align: center;
+    margin: 8pt 0;
+    break-inside: avoid;
+  }
+  .display-math .num { font-style: normal; font-size: 8.6pt; margin-left: 10pt; }
+  figure {
+    margin: 8pt 0 9pt;
+    padding: 6pt 8pt;
+    border: 0.6pt solid #cfcfcf;
+    border-radius: 3pt;
+    background: #fcfcfe;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  figure svg { display: block; width: 100%; height: auto; }
+  figcaption {
+    font-family: 'PingFang SC', 'Heiti SC', sans-serif;
+    font-size: 8.4pt;
+    line-height: 1.5;
+    color: #2a2a2a;
+    margin-top: 5pt;
+    text-align: center;
+  }
+  figcaption b { font-weight: 600; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'PingFang SC', 'Heiti SC', sans-serif;
+    font-size: 8.6pt;
+    margin: 4pt 0 9pt;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  caption {
+    caption-side: top;
+    text-align: left;
+    font-size: 8.4pt;
+    line-height: 1.5;
+    margin-bottom: 3pt;
+  }
+  th, td { padding: 3pt 4pt; text-align: right; border-bottom: 0.5pt solid #d8d8d8; }
+  th:first-child, td:first-child { text-align: left; }
+  thead th { border-top: 0.9pt solid #4a4a4a; border-bottom: 0.7pt solid #4a4a4a; font-weight: 600; }
+  tbody tr:last-child td { border-bottom: 0.9pt solid #4a4a4a; }
+  .note {
+    font-size: 8.4pt;
+    line-height: 1.5;
+    color: #333;
+    border-top: 0.5pt dashed #b9b9b9;
+    padding-top: 4pt;
+    margin-top: 10pt;
+  }
+  .formula-term {
+    font-family: 'Songti SC', 'STSong', serif;
+    font-style: normal;
+  }
+  .pagebreak { break-before: page; page-break-before: always; }
+  .refs { font-size: 9pt; line-height: 1.55; }
+  .refs p { margin: 0 0 4pt; padding-left: 22pt; text-indent: -22pt; text-align: left; }
+</style>
+</head>
+<body>
+
+<div class="head">
+  <h1>面向长文档理解的自适应稀疏注意力机制研究</h1>
+  <p class="authors">陈美玲&nbsp;&nbsp;王志远&nbsp;&nbsp;李思澄&nbsp;&nbsp;周牧之</p>
+  <p class="affil">北桥大学计算机科学与技术学院&nbsp;&nbsp;·&nbsp;&nbsp;语言系统研究所</p>
+  <p class="contact">chen.meiling@northbridge.example.edu</p>
+</div>
+<hr class="rule">
+
+<div class="abstract">
+  <p><span class="label">摘要：</span>长文档理解任务中，注意力机制的计算开销随上下文长度呈二次增长，成为模型推理与训练的主要瓶颈。本文提出一种<b>自适应稀疏注意力</b>（Adaptive Sparse Attention，ASA）机制：利用查询与键的低秩草图（low-rank sketch）为每个注意力头学习一组内容相关的路由掩码，仅对路由选中的键块执行精确注意力计算。在三个长文档基准上，ASA 在 32k 词元上下文中将注意力浮点运算量降低至稠密注意力的 0.21&nbsp;倍，峰值显存降低至 0.32&nbsp;倍，同时将准确率差距控制在 0.3 个百分点以内。消融实验表明，收益主要来自低秩草图带来的廉价路由，而非稀疏模式本身。</p>
+  <p class="keywords"><b>关键词：</b>稀疏注意力；长上下文；高效 <span class="latin">Transformer</span>；路由学习；语言模型</p>
+</div>
+
+<h2>一、引言</h2>
+<p>随着大语言模型在长文档阅读理解、代码补全与科学文献摘要等场景中的广泛应用，上下文长度从最初的 2k 词元迅速扩展到 32k 乃至百万级词元。然而，标准 <span class="latin">Transformer</span> 的自注意力机制需要计算 <span class="math">n × n</span> 的分数矩阵，其计算复杂度为 <span class="math">O(n<sup>2</sup>d)</span>，当 <span class="math">n</span> 增长到数万时，注意力计算成为整个模型的主要耗时来源。</p>
+<p>已有工作大致沿三条路线降低这一开销：一是固定稀疏模式，如滑窗注意力与分块稀疏注意力；二是低秩近似，如 <span class="latin">Linformer</span> 与 <span class="latin">Performer</span>；三是基于检索的外部记忆。固定模式实现简单、硬件友好，但无法感知内容，往往把预算浪费在无关词元上；检索方法内容相关，却引入了不可微的离散阶段，训练与推理流程复杂。本文尝试回答：模型能否以仅随序列长度对数增长的路由预算，学习“应该关注哪里”？</p>
+
+<figure>
+  <svg viewBox="0 0 540 168" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="注意力质量分布与路由结构示意">
+    <rect x="0" y="0" width="540" height="168" fill="#ffffff"/>
+    <!-- 左侧：注意力质量分布柱状图 -->
+    <g>
+      <line x1="40" y1="20" x2="40" y2="128" stroke="#444" stroke-width="1"/>
+      <line x1="40" y1="128" x2="238" y2="128" stroke="#444" stroke-width="1"/>
+      <text x="34" y="16" font-family="Helvetica" font-size="8.6" text-anchor="end" fill="#333">密度</text>
+      <text x="139" y="146" font-family="PingFang SC, Helvetica" font-size="8.8" text-anchor="middle" fill="#333">按注意力质量排序的键位置</text>
+      <rect x="48" y="30" width="14" height="98" fill="#4d6bfe"/>
+      <rect x="66" y="52" width="14" height="76" fill="#7d93ff"/>
+      <rect x="84" y="74" width="14" height="54" fill="#a9b8ff"/>
+      <rect x="102" y="92" width="14" height="36" fill="#c8d1ff"/>
+      <rect x="120" y="104" width="14" height="24" fill="#dbe1ff"/>
+      <rect x="138" y="112" width="14" height="16" fill="#e7ebff"/>
+      <rect x="156" y="118" width="14" height="10" fill="#eef1ff"/>
+      <rect x="174" y="121" width="14" height="7" fill="#f2f4ff"/>
+      <text x="55" y="24" font-family="Helvetica" font-size="8" text-anchor="middle" fill="#4d6bfe">92%</text>
+      <text x="198" y="124" font-family="PingFang SC, Helvetica" font-size="8.2" fill="#666">其余 95%</text>
+    </g>
+    <!-- 右侧：路由流程 -->
+    <g transform="translate(276,16)">
+      <rect x="0" y="6" width="48" height="58" rx="5" fill="#f3f6ff" stroke="#8a9cff"/>
+      <text x="24" y="32" font-family="Helvetica" font-size="9" text-anchor="middle" fill="#334">Q / K</text>
+      <text x="24" y="46" font-family="PingFang SC, Helvetica" font-size="8" text-anchor="middle" fill="#556">低秩投影</text>
+      <path d="M48 35 L68 35" stroke="#666" stroke-width="1.3" marker-end="url(#zhArrow)"/>
+      <rect x="68" y="10" width="52" height="50" rx="5" fill="#fff7e3" stroke="#dfa63c"/>
+      <text x="94" y="31" font-family="PingFang SC, Helvetica" font-size="8.2" text-anchor="middle" fill="#5a3d00">块评分</text>
+      <text x="94" y="43" font-family="Helvetica" font-size="8.2" text-anchor="middle" fill="#5a3d00">top-k</text>
+      <path d="M120 35 L140 35" stroke="#666" stroke-width="1.3" marker-end="url(#zhArrow)"/>
+      <rect x="140" y="10" width="58" height="50" rx="5" fill="#eaf8ef" stroke="#4caf6d"/>
+      <text x="169" y="31" font-family="PingFang SC, Helvetica" font-size="8.2" text-anchor="middle" fill="#1c5c30">精确注意力</text>
+      <text x="169" y="43" font-family="PingFang SC, Helvetica" font-size="8.2" text-anchor="middle" fill="#1c5c30">稀疏 softmax</text>
+      <defs>
+        <marker id="zhArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 z" fill="#666"/>
+        </marker>
+      </defs>
+    </g>
+  </svg>
+  <figcaption><b>图 1：</b>左侧为 arXiv 长文档上按注意力质量排序的键位置分布，前 5% 的查询—键对占据约 92% 的注意力质量；右侧为 ASA 的计算流程：低秩投影 → 块评分与 top-k 选择 → 稀疏精确注意力。</figcaption>
+</figure>
+
+<h2>二、方法</h2>
+<h3>2.1 路由草图</h3>
+<p>设某一注意力头的查询、键与值矩阵分别为 <span class="math">Q, K, V ∈ ℝ<sup>n×d</sup></span>。我们用一个固定随机矩阵 <span class="math">U<sub>h</sub> ∈ ℝ<sup>d×r</sup></span>（<span class="math">r = 32</span>）将查询投影到低维空间，并以每个键块的平均键 <span class="math">k̄<sub>j</sub></span> 作为块代表：</p>
+<p class="display-math">s<sub>i,j</sub> = (U<sub>h</sub><sup>⊤</sup> q<sub>i</sub>)<sup>⊤</sup> (U<sub>h</sub><sup>⊤</sup> k̄<sub>j</sub>),&nbsp;&nbsp; j = 1, …, n/b<span class="num">（1）</span></p>
+<p>其中块大小 <span class="math">b = 64</span>，每个查询块保留得分最高的 <span class="math">k = ⌈2 log<sub>2</sub>(n/b)⌉</span> 个键块。由于 <span class="math">r ≪ d</span>，块评分仅需 <span class="math">O(n<sup>2</sup>r/b)</span>，约为完整矩阵乘法的百分之一。</p>
+
+<h3>2.2 直通路由与负载均衡</h3>
+<p>top-k 选择不可微，我们采用直通估计器（straight-through estimator）：对被选中的块，令 <span class="math">∂m<sub>i,j</sub>/∂s<sub>i,j</sub> = 1</span>；并引入负载均衡正则项 <span class="math">L<sub>bal</sub> = ∑<sub>j</sub> (f<sub>j</sub> − 1/B)<sup>2</sup></span>，其中 <span class="math">f<sub>j</sub></span> 为路由到第 <span class="math">j</span> 个键块的查询比例。总体目标函数为：</p>
+<p class="display-math">L(θ) = L<sub>lm</sub>(θ) + λ<sub>1</sub> L<sub>bal</sub>(θ) + λ<sub>2</sub> ‖θ<sub>route</sub>‖<sup>2</sup><span class="num">（2）</span></p>
+<p>实验中 <span class="math">λ<sub>1</sub> = 0.01</span>、<span class="math">λ<sub>2</sub> = 10<sup>−4</sup></span> 在全部设置下保持稳定；当 <span class="math">λ<sub>1</sub></span> 超过 0.1 时，路由分布趋于均匀，准确率出现明显下降。</p>
+
+<h3>2.3 计算复杂度</h3>
+<p>对长度为 <span class="math">n</span> 的序列，稠密注意力的计算量为 <span class="math">O(n<sup>2</sup>d)</span>；ASA 的块评分为 <span class="math">O(n<sup>2</sup>r/b)</span>，精确注意力仅需 <span class="math">O(nkb d)</span>。当 <span class="math">n = 32768</span>、<span class="math">k = 9</span> 时，理论计算量约为稠密的 0.21 倍，与实测结果一致。</p>
+
+<table>
+  <caption><b>表 1：</b>32k 词元上下文下的长文档基准结果。准确率为三个随机种子的平均值；浮点运算量仅统计注意力部分，并以稠密注意力为 1.00 倍归一化。</caption>
+  <thead>
+    <tr><th>模型</th><th>参数量</th><th>NarrativeQA</th><th>QMSum</th><th>SCROLLS</th><th>注意力计算量</th><th>峰值显存</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>稠密基线（Dense）</td><td>355M</td><td>31.8</td><td>21.4</td><td>62.9</td><td>1.00×</td><td>1.00×</td></tr>
+    <tr><td>滑窗注意力（Sliding）</td><td>355M</td><td>26.1</td><td>19.7</td><td>58.2</td><td>0.11×</td><td>0.21×</td></tr>
+    <tr><td>低秩近似（Linformer）</td><td>358M</td><td>29.4</td><td>20.2</td><td>61.0</td><td>0.34×</td><td>0.42×</td></tr>
+    <tr><td>固定分块稀疏</td><td>355M</td><td>30.2</td><td>20.6</td><td>62.1</td><td>0.23×</td><td>0.29×</td></tr>
+    <tr><td><b>ASA（本文）</b></td><td>356M</td><td><b>31.6</b></td><td><b>21.2</b></td><td><b>62.7</b></td><td><b>0.21×</b></td><td><b>0.32×</b></td></tr>
+  </tbody>
+</table>
+
+<h2>三、实验设置</h2>
+<p>我们在 180B 词元的混合语料（书籍、网页与科学文献）上训练 355M 参数、32k 上下文长度的解码器模型。所有模型共享同一分词器、数据顺序与优化器调度，仅注意力层不同。训练在 64 张 A100-40GB 显卡上进行，每次运行约 36 小时；表中每个数字为三个随机种子的平均值。</p>
+<p>如表 1 所示，ASA 在 NarrativeQA 上恢复稠密模型 99.4% 的准确率，在 QMSum 上恢复 99.1%，同时将注意力计算量降至 0.21 倍、峰值显存降至 0.32 倍。固定分块稀疏方法在相近的计算预算下平均落后 1.4 个百分点，我们将其归因于它无法在层间动态调整预算。</p>
+<p>当上下文扩展到 64k 词元时，差距进一步拉大：稠密注意力在单张 40GB 显卡上已无法以大于 1 的批大小训练，而 ASA 仍可使用批大小 8 正常训练。这正是我们关注的实际场景——不是在短序列上追求更便宜的注意力，而是在不重构训练栈的前提下使用更长的上下文。</p>
+
+<div class="pagebreak"></div>
+
+<h2>四、消融实验</h2>
+<p>我们每次移除一个组件。将可学习的低秩草图替换为固定随机投影后，NarrativeQA 仅下降 0.2 个百分点，但保留了大部分计算量优势；在训练 10k 步后冻结路由则损失 0.4 个百分点。这说明路由信号本身易于学习，而绝大部分收益来自使路由变得廉价的低秩草图——这一发现与我们的初始直觉相反。</p>
+<p>将 <span class="math">k</span> 从 9 增加到 16，准确率变化小于 0.1 个百分点，而聚集计算量翻倍；将 <span class="math">k</span> 减小到 5 则损失 0.7 个百分点。显存优势对 <span class="math">k</span> 相对不敏感，因为被选中的块被打包进连续缓冲区，峰值显存取决于 <span class="math">k·b</span> 而非完整序列长度。三种设置下峰值显存均低于稠密模型的 0.4 倍。</p>
+
+<figure>
+  <svg viewBox="0 0 540 130" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="不同上下文长度下的计算量对比">
+    <rect x="0" y="0" width="540" height="130" fill="#ffffff"/>
+    <line x1="52" y1="16" x2="52" y2="102" stroke="#444" stroke-width="1"/>
+    <line x1="52" y1="102" x2="300" y2="102" stroke="#444" stroke-width="1"/>
+    <text x="46" y="14" font-family="Helvetica" font-size="8" text-anchor="end" fill="#333">TFLOPs</text>
+    <text x="176" y="120" font-family="PingFang SC, Helvetica" font-size="8.6" text-anchor="middle" fill="#333">上下文长度（词元）</text>
+    <text x="70" y="105" font-family="Helvetica" font-size="7.6" text-anchor="middle" fill="#666">4k</text>
+    <text x="118" y="105" font-family="Helvetica" font-size="7.6" text-anchor="middle" fill="#666">8k</text>
+    <text x="170" y="105" font-family="Helvetica" font-size="7.6" text-anchor="middle" fill="#666">16k</text>
+    <text x="228" y="105" font-family="Helvetica" font-size="7.6" text-anchor="middle" fill="#666">32k</text>
+    <text x="286" y="105" font-family="Helvetica" font-size="7.6" text-anchor="middle" fill="#666">64k</text>
+    <polyline points="70,96 118,86 170,66 228,34 286,20" fill="none" stroke="#e05252" stroke-width="2.2"/>
+    <polyline points="70,99 118,95 170,88 228,76 286,62" fill="none" stroke="#4d6bfe" stroke-width="2.2"/>
+    <text x="300" y="30" font-family="PingFang SC, Helvetica" font-size="8.4" fill="#e05252">稠密注意力</text>
+    <text x="300" y="44" font-family="PingFang SC, Helvetica" font-size="8.4" fill="#4d6bfe">ASA</text>
+    <text x="300" y="58" font-family="PingFang SC, Helvetica" font-size="8.4" fill="#666">（归一化）</text>
+  </svg>
+  <figcaption><b>图 2：</b>不同上下文长度下注意力计算量的增长趋势。稠密注意力随长度近似平方增长，ASA 近似线性增长；两者在 4k 时差距较小，在 64k 时相差约 8 倍。</figcaption>
+</figure>
+
+<h2>五、局限性与相关工作</h2>
+<p>ASA 假设注意力质量集中在连续的键块内，这一假设对自然语言成立，但对包含长距离标识符引用的代码或结构化表格可能失效。我们尚未在指令微调模型上评估，其路由模式可能更尖锐，负载均衡正则项或需重新调参。此外，块对齐的掩码要求变长打包时填充到块边界，每条序列最多浪费 <span class="math">b − 1</span> 个位置。</p>
+<p>稀疏与低秩注意力研究已有较长历史：滑窗注意力、固定分块模式、可学习路由与检索增强记忆等方法都在以精确性换取开销。本文的贡献在于把路由做得足够廉价，使其“消失在背景中”：草图仅为一个 32 维投影，在 32k 词元下评分开销不足稠密矩阵乘法的百分之一。</p>
+
+<h2>六、结论</h2>
+<p>本文提出自适应稀疏注意力机制，其计算开销随序列长度近似线性增长，同时保持稠密级别的准确率。主要结论是：路由不必昂贵也能有效。我们开源训练配方与推理内核，并希望“草图—聚集”这一形式能为后续长上下文结构研究提供有用的基线。</p>
+
+<h2>参考文献</h2>
+<div class="refs">
+  <p>[1] Beltagy, I., Peters, M. E., Cohan, A. Longformer: The Long-Document Transformer. <i>arXiv:2004.05150</i>, 2020.</p>
+  <p>[2] Choromanski, K., et al. Rethinking Attention with Performers. <i>ICLR</i>, 2021.</p>
+  <p>[3] Dao, T., et al. FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness. <i>NeurIPS</i>, 2022.</p>
+  <p>[4] Kitaev, N., Kaiser, Ł., Levskaya, A. Reformer: The Efficient Transformer. <i>ICLR</i>, 2020.</p>
+  <p>[5] Zaheer, M., et al. Big Bird: Transformers for Longer Sequences. <i>NeurIPS</i>, 2020.</p>
+  <p>[6] 王志远, 陈美玲. 长文档理解中的注意力路由综述. 《语言系统学报》, 2025, 14(2): 88–104.</p>
+</div>
+
+<div class="note">
+  <p>基金项目：北桥大学基础研究基金（编号 NB-2025-117）；语言系统研究所算力支持。感谢匿名审稿人的细致阅读与关于冻结路由实验的建议。代码与模型检查点见 <span class="latin">northbridge.example.edu/asa</span>。收录于第十二届高效语言系统会议（ELS 2026）论文集。</p>
+</div>
+
+</body>
+</html>

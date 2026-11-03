@@ -1,0 +1,12 @@
+.DS_Store
+node_modules/
+.env
+.env.*
+!.env.example
+*.log
+*.pid
+*.bak
+*.bak-*
+.dsh-dev/
+playwright-report/
+test-results/

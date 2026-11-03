@@ -1,0 +1,343 @@
+{
+  "origin": "http://127.0.0.1:7823",
+  "startedAt": "2026-11-03T07:19:40.661Z",
+  "durationMs": 16921,
+  "results": [
+    {
+      "section": "infra · static server",
+      "name": "server serves lib/vendor/harness/fixtures with correct MIME",
+      "status": "pass",
+      "ms": 72
+    },
+    {
+      "section": "infra · static server",
+      "name": "fixtures are valid: header %PDF-, sized, corrupt fixture unparseable",
+      "status": "pass",
+      "ms": 3
+    },
+    {
+      "section": "infra · static server",
+      "name": "server returns 404 for unknown paths and blocks traversal",
+      "status": "pass",
+      "ms": 5
+    },
+    {
+      "section": "infra · static server",
+      "name": "server rejects non-GET/HEAD methods",
+      "status": "pass",
+      "ms": 0
+    },
+    {
+      "section": "infra · __ModuleLoader__ shim semantics",
+      "name": "shim: duplicate registration throws like the real module system",
+      "status": "pass",
+      "ms": 1
+    },
+    {
+      "section": "infra · __ModuleLoader__ shim semantics",
+      "name": "shim: unknown require throws a loud module-table error",
+      "status": "pass",
+      "ms": 2
+    },
+    {
+      "section": "infra · __ModuleLoader__ shim semantics",
+      "name": "shim: require(\"react\") resolves the UMD React and materialization is memoized",
+      "status": "pass",
+      "ms": 6
+    },
+    {
+      "section": "infra · __ModuleLoader__ shim semantics",
+      "name": "shim: missing chunk rejects with a clear load error",
+      "status": "pass",
+      "ms": 7
+    },
+    {
+      "section": "infra · __ModuleLoader__ shim semantics",
+      "name": "shim: missing-chunk state is graceful (no uncaught page errors)",
+      "status": "pass",
+      "ms": 0
+    },
+    {
+      "section": "viewer · client.viewer.js",
+      "name": "viewer: document ready, page count, fixture bytes handed to PdfViewer",
+      "status": "pass",
+      "ms": 283
+    },
+    {
+      "section": "viewer · client.viewer.js",
+      "name": "viewer: first page canvas is non-blank (pixel sampling)",
+      "status": "pass",
+      "ms": 2158
+    },
+    {
+      "section": "viewer · client.viewer.js",
+      "name": "viewer: text layer spans exist for selection",
+      "status": "pass",
+      "ms": 6
+    },
+    {
+      "section": "viewer · client.viewer.js",
+      "name": "viewer: selecting text reports a normalized Selection payload",
+      "status": "pass",
+      "ms": 81
+    },
+    {
+      "section": "viewer · client.viewer.js",
+      "name": "viewer: Escape clears the selection (onSelection(null))",
+      "status": "pass",
+      "ms": 47
+    },
+    {
+      "section": "viewer · client.viewer.js",
+      "name": "viewer: apiRef.clearTextSelection() clears the selection",
+      "status": "pass",
+      "ms": 13
+    },
+    {
+      "section": "viewer · client.viewer.js",
+      "name": "viewer: renderPageOverlay hook receives page boxes",
+      "status": "pass",
+      "ms": 26
+    },
+    {
+      "section": "viewer · client.viewer.js",
+      "name": "viewer: apiRef.scrollToPage(2) reports onPageChange(2)",
+      "status": "pass",
+      "ms": 3
+    },
+    {
+      "section": "viewer · client.viewer.js",
+      "name": "viewer: zoom prop changes the rendered canvas size",
+      "status": "pass",
+      "ms": 175
+    },
+    {
+      "section": "viewer · client.viewer.js",
+      "name": "viewer: CJK fixture renders with selectable CJK text",
+      "status": "pass",
+      "ms": 999
+    },
+    {
+      "section": "viewer · client.viewer.js",
+      "name": "viewer: corrupt PDF renders a localized error state instead of crashing",
+      "status": "pass",
+      "ms": 668
+    },
+    {
+      "section": "viewer · client.viewer.js",
+      "name": "viewer scenario: no uncaught page errors",
+      "status": "pass",
+      "ms": 0
+    },
+    {
+      "section": "annotations · client.annotations.js",
+      "name": "annotations: exports exactly the documented API",
+      "status": "pass",
+      "ms": 10
+    },
+    {
+      "section": "annotations · client.annotations.js",
+      "name": "annotations: ANNOTATION_COLORS is the ordered four-color palette",
+      "status": "pass",
+      "ms": 4
+    },
+    {
+      "section": "annotations · client.annotations.js",
+      "name": "annotations: buildAskPrompt default templates are localized (zh/en)",
+      "status": "pass",
+      "ms": 3
+    },
+    {
+      "section": "annotations · client.annotations.js",
+      "name": "annotations: long quotes are truncated with a localized marker",
+      "status": "pass",
+      "ms": 6
+    },
+    {
+      "section": "annotations · client.annotations.js",
+      "name": "annotations: selecting text shows the 3-action menu with exact zh labels",
+      "status": "pass",
+      "ms": 729
+    },
+    {
+      "section": "annotations · client.annotations.js",
+      "name": "annotations: menu is positioned inside the paper page (absolute style)",
+      "status": "pass",
+      "ms": 2
+    },
+    {
+      "section": "annotations · client.annotations.js",
+      "name": "annotations: 高亮 adds a highlight, paints it, and closes the menu",
+      "status": "pass",
+      "ms": 84
+    },
+    {
+      "section": "annotations · client.annotations.js",
+      "name": "annotations: highlight persists in localStorage across reload",
+      "status": "pass",
+      "ms": 210
+    },
+    {
+      "section": "annotations · client.annotations.js",
+      "name": "annotations: Escape closes the menu and onClose clears the selection",
+      "status": "pass",
+      "ms": 9
+    },
+    {
+      "section": "annotations · client.annotations.js",
+      "name": "annotations: note composer (disabled empty save, Ctrl+Enter saves, panel lists it)",
+      "status": "pass",
+      "ms": 318
+    },
+    {
+      "section": "annotations · client.annotations.js",
+      "name": "annotations: note persists across reload and appears in the notes panel",
+      "status": "pass",
+      "ms": 60
+    },
+    {
+      "section": "annotations · client.annotations.js",
+      "name": "annotations: ask action records the zh prompt (language follows UI)",
+      "status": "pass",
+      "ms": 33
+    },
+    {
+      "section": "annotations · client.annotations.js",
+      "name": "annotations: live language switch updates menu labels and ask prompt language",
+      "status": "pass",
+      "ms": 107
+    },
+    {
+      "section": "annotations · client.annotations.js",
+      "name": "annotations: deleting rows empties the panel and persists after reload",
+      "status": "pass",
+      "ms": 142
+    },
+    {
+      "section": "annotations · client.annotations.js",
+      "name": "annotations: corrupt localStorage is tolerated (fresh empty store, page still works)",
+      "status": "pass",
+      "ms": 34
+    },
+    {
+      "section": "annotations · client.annotations.js",
+      "name": "annotations scenario: no uncaught page errors",
+      "status": "pass",
+      "ms": 0
+    },
+    {
+      "section": "library · client.library.js",
+      "name": "library: exports the 3 documented API names and formatBytes probes",
+      "status": "pass",
+      "ms": 1
+    },
+    {
+      "section": "library · client.library.js",
+      "name": "library: empty state + upload paper-en.pdf creates a row with size",
+      "status": "pass",
+      "ms": 264
+    },
+    {
+      "section": "library · client.library.js",
+      "name": "library: opening a row returns the stored PDF bytes",
+      "status": "pass",
+      "ms": 67
+    },
+    {
+      "section": "library · client.library.js",
+      "name": "library: uploaded paper persists across reload",
+      "status": "pass",
+      "ms": 55
+    },
+    {
+      "section": "library · client.library.js",
+      "name": "library: delete uses an inline two-step confirm; cancel keeps the paper",
+      "status": "pass",
+      "ms": 83
+    },
+    {
+      "section": "library · client.library.js",
+      "name": "library: confirming delete removes the paper and it stays gone after reload",
+      "status": "pass",
+      "ms": 141
+    },
+    {
+      "section": "library · client.library.js",
+      "name": "library: non-PDF upload shows the localized error and keeps the list unchanged",
+      "status": "pass",
+      "ms": 106
+    },
+    {
+      "section": "library · client.library.js",
+      "name": "library: corrupt.pdf is accepted by header validation (parse errors are viewer-owned)",
+      "status": "pass",
+      "ms": 97
+    },
+    {
+      "section": "library · client.library.js",
+      "name": "library: English UI copy (empty state + non-PDF error)",
+      "status": "pass",
+      "ms": 302
+    },
+    {
+      "section": "library · client.library.js",
+      "name": "library scenario: no uncaught page errors",
+      "status": "pass",
+      "ms": 1
+    },
+    {
+      "section": "integration · client.app.js + client.js",
+      "name": "integration: app mounts with the fake core and seeds the fixture paper",
+      "status": "pass",
+      "ms": 23
+    },
+    {
+      "section": "integration · client.app.js + client.js",
+      "name": "integration: opening the seeded paper renders the PDF in the reader",
+      "status": "pass",
+      "ms": 551
+    },
+    {
+      "section": "integration · client.app.js + client.js",
+      "name": "integration: selecting text in the reader shows the app floating menu (zh)",
+      "status": "pass",
+      "ms": 67
+    },
+    {
+      "section": "integration · client.app.js + client.js",
+      "name": "integration: highlight creates a toast + annotation, notes panel lists it",
+      "status": "pass",
+      "ms": 120
+    },
+    {
+      "section": "integration · client.app.js + client.js",
+      "name": "integration: ask action sends the zh prompt through core.askInSession",
+      "status": "pass",
+      "ms": 65
+    },
+    {
+      "section": "integration · client.app.js + client.js",
+      "name": "integration: reload restores the last paper and its annotations",
+      "status": "pass",
+      "ms": 236
+    },
+    {
+      "section": "integration · client.app.js + client.js",
+      "name": "integration: English UI uses English menu and ask prompt",
+      "status": "pass",
+      "ms": 1022
+    },
+    {
+      "section": "integration · client.app.js + client.js",
+      "name": "integration: client.js apply() registers the tab type, guide card and tab body",
+      "status": "pass",
+      "ms": 245
+    },
+    {
+      "section": "integration · client.app.js + client.js",
+      "name": "integration scenario: no uncaught page errors",
+      "status": "pass",
+      "ms": 0
+    }
+  ]
+}
